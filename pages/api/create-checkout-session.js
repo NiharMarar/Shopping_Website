@@ -1,8 +1,13 @@
 import Stripe from 'stripe';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Initialize Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -10,25 +15,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    const cookieStore = cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          get(name) {
-            return cookieStore.get(name)?.value;
-          },
-        },
-      }
-    );
-
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
     const { orderId, items, shippingAddress } = req.body;
 
     // Create line items for Stripe
@@ -51,13 +37,12 @@ export default async function handler(req, res) {
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
-      customer_email: session.user.email,
       shipping_address_collection: {
         allowed_countries: ['US', 'CA', 'GB'],
       },
       metadata: {
         orderId,
-        userId: session.user.id,
+        userId: req.body.userId,
       },
     });
 
