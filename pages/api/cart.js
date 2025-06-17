@@ -1,33 +1,23 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
-const supabase = createRouteHandlerClient({ cookies });
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// In-memory store for carts (replace with database in production)
+const carts = new Map();
 
 export default async function handler(req, res) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { method } = req;
 
-  if (!session) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  const userId = session.user.id;
-
-  switch (req.method) {
+  switch (method) {
     case 'GET':
       try {
-        const { data: cartItems, error } = await supabase
-          .from('cart_items')
-          .select(`
-            *,
-            products (*)
-          `)
-          .eq('user_id', userId);
-
-        if (error) throw error;
-        return res.status(200).json(cartItems);
+        const userId = req.query.userId || 'anonymous';
+        const cart = carts.get(userId) || [];
+        return res.status(200).json(cart);
       } catch (error) {
         return res.status(500).json({ error: error.message });
       }
@@ -35,107 +25,61 @@ export default async function handler(req, res) {
     case 'POST':
       try {
         const { productId, quantity } = req.body;
-
-        // Check if product exists
-        const { data: product, error: productError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('id', productId)
-          .single();
-
-        if (productError || !product) {
-          return res.status(404).json({ error: 'Product not found' });
-        }
-
-        // Check if item already in cart
-        const { data: existingItem, error: existingError } = await supabase
-          .from('cart_items')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('product_id', productId)
-          .single();
+        const userId = req.body.userId || 'anonymous';
+        
+        let cart = carts.get(userId) || [];
+        const existingItem = cart.find(item => item.productId === productId);
 
         if (existingItem) {
-          // Update quantity if item exists
-          const { data: updatedItem, error: updateError } = await supabase
-            .from('cart_items')
-            .update({ quantity: existingItem.quantity + quantity })
-            .eq('id', existingItem.id)
-            .select()
-            .single();
-
-          if (updateError) throw updateError;
-          return res.status(200).json(updatedItem);
+          existingItem.quantity += quantity;
+        } else {
+          cart.push({ productId, quantity });
         }
 
-        // Add new item to cart
-        const { data: newItem, error: insertError } = await supabase
-          .from('cart_items')
-          .insert([
-            {
-              user_id: userId,
-              product_id: productId,
-              quantity,
-            },
-          ])
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        return res.status(201).json(newItem);
+        carts.set(userId, cart);
+        return res.status(200).json(cart);
       } catch (error) {
         return res.status(500).json({ error: error.message });
       }
 
     case 'PUT':
       try {
-        const { itemId, quantity } = req.body;
+        const { productId, quantity } = req.body;
+        const userId = req.body.userId || 'anonymous';
+        
+        let cart = carts.get(userId) || [];
+        const itemIndex = cart.findIndex(item => item.productId === productId);
 
-        if (quantity <= 0) {
-          // Remove item if quantity is 0 or less
-          const { error: deleteError } = await supabase
-            .from('cart_items')
-            .delete()
-            .eq('id', itemId)
-            .eq('user_id', userId);
-
-          if (deleteError) throw deleteError;
-          return res.status(200).json({ message: 'Item removed from cart' });
+        if (itemIndex > -1) {
+          if (quantity <= 0) {
+            cart.splice(itemIndex, 1);
+          } else {
+            cart[itemIndex].quantity = quantity;
+          }
+          carts.set(userId, cart);
         }
 
-        // Update quantity
-        const { data: updatedItem, error: updateError } = await supabase
-          .from('cart_items')
-          .update({ quantity })
-          .eq('id', itemId)
-          .eq('user_id', userId)
-          .select()
-          .single();
-
-        if (updateError) throw updateError;
-        return res.status(200).json(updatedItem);
+        return res.status(200).json(cart);
       } catch (error) {
         return res.status(500).json({ error: error.message });
       }
 
     case 'DELETE':
       try {
-        const { itemId } = req.body;
+        const { productId } = req.body;
+        const userId = req.body.userId || 'anonymous';
+        
+        let cart = carts.get(userId) || [];
+        cart = cart.filter(item => item.productId !== productId);
+        carts.set(userId, cart);
 
-        const { error } = await supabase
-          .from('cart_items')
-          .delete()
-          .eq('id', itemId)
-          .eq('user_id', userId);
-
-        if (error) throw error;
-        return res.status(200).json({ message: 'Item removed from cart' });
+        return res.status(200).json(cart);
       } catch (error) {
         return res.status(500).json({ error: error.message });
       }
 
     default:
       res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
-      return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+      return res.status(405).end(`Method ${method} Not Allowed`);
   }
 }
