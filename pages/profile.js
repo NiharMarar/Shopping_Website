@@ -16,47 +16,31 @@ export default function Profile() {
   console.log('🚨 Profile: Component state - user:', user?.email, 'loading:', loading, 'router.pathname:', router.pathname);
   console.log('🔍 Profile component state - user:', user?.email, 'loading:', loading);
 
-  // Only redirect if not loading and no user
+  // redirect to login if not authenticated
   useEffect(() => {
     console.log('🚨 Profile: useEffect TRIGGERED - user:', user?.email, 'loading:', loading);
     console.log('🔍 Profile useEffect - user:', user?.email, 'loading:', loading);
     if (!loading && !user) {
       console.log('🚨 Profile: REDIRECT CONDITION MET - no user and not loading, should redirect to login');
       console.log('🔍 No user and not loading, redirecting to login');
-      console.log('🚨 Profile: About to call router.push("/login")');
-      router.push('/login');
-      console.log('🚨 Profile: router.push() called');
+      console.log('🚨 Profile: About to call router.replace("/login")');
+      router.replace('/login');
+      console.log('🚨 Profile: router.replace() called');
     } else {
       console.log('🚨 Profile: No redirect needed - loading:', loading, 'user:', user?.email);
     }
-  }, [user, loading, router]);
+  }, [loading, user, router]);
 
-  // Show loading while checking auth
+  console.log('🚨 Profile: About to return JSX');
+
   if (loading) {
-    console.log('🚨 Profile: Showing loading state');
-    console.log('🔍 Profile component showing loading state');
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    console.log('🚨 Profile: Still loading, showing loader');
+    return <div>Loading profile…</div>;
   }
-
-  // Show login prompt if no user
+  
   if (!user) {
-    console.log('🚨 Profile: Showing not logged in state');
-    console.log('🔍 Profile component showing not logged in state');
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Not Logged In</h1>
-          <p className="mt-2 text-gray-600">Please log in to view your profile.</p>
-        </div>
-      </div>
-    );
+    console.log('🚨 Profile: No user, returning null (redirecting)');
+    return null; // redirecting
   }
 
   console.log('🚨 Profile: Showing user profile for:', user.email);

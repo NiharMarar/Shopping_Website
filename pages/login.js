@@ -23,23 +23,16 @@ export default function Login() {
   console.log('🚨 Login: Component state - user:', user?.email, 'authLoading:', authLoading, 'loading:', loading, 'router.pathname:', router.pathname);
   console.log('🔍 Login component state - user:', user?.email, 'authLoading:', authLoading, 'loading:', loading);
 
-  // Simple redirect check
-  if (!authLoading && user) {
-    console.log('🚨 Login: REDIRECT CONDITION MET - user is logged in, should redirect');
-    console.log('🔍 User already logged in, redirecting to profile');
-    if (typeof window !== 'undefined') {
-      console.log('🚨 Login: About to set window.location.href');
-      console.log('🔍 Setting window.location.href to /profile');
-      window.location.href = '/profile';
-      console.log('🚨 Login: window.location.href set');
+  // 1) if the user is already logged in, send them to /profile
+  useEffect(() => {
+    console.log('🚨 Login: useEffect TRIGGERED - authLoading:', authLoading, 'user:', user?.email);
+    if (!authLoading && user) {
+      console.log('🚨 Login: REDIRECT CONDITION MET - user is logged in, redirecting to profile');
+      console.log('🚨 Login: About to call router.replace("/profile")');
+      router.replace('/profile');
+      console.log('🚨 Login: router.replace() called');
     }
-    console.log('🚨 Login: About to return null');
-    console.log('🔍 Returning null from login component');
-    return null; // Don't render anything while redirecting
-  }
-
-  console.log('🚨 Login: Continuing to render form - no redirect needed');
-  console.log('🔍 Login component continuing to render form...');
+  }, [authLoading, user, router]);
 
   const handleSubmit = async (e) => {
     console.log('🚨 Login: Form submitted');
@@ -70,6 +63,13 @@ export default function Login() {
   console.log('🚨 Login: About to return JSX');
   console.log('🔍 Login component returning JSX...');
 
+  // 2) while auth is still loading, return a loader
+  if (authLoading) {
+    console.log('🚨 Login: Auth still loading, showing loader');
+    return <div>Loading auth…</div>;
+  }
+
+  // 3) otherwise show the login form
   return (
     <>
       <Head>
