@@ -1,10 +1,20 @@
+import dynamic from 'next/dynamic';
+import Layout from '../components/Layout';
 import '../styles/globals.css';
-import { AuthProvider } from '../lib/AuthContext';
 
-export default function MyApp({ Component, pageProps }) {
+const AuthProvider = dynamic(
+  () => import('../lib/AuthContext').then(mod => mod.AuthProvider),
+  { ssr: false }
+);
+
+function MyApp({ Component, pageProps }) {
   return (
     <AuthProvider>
-      <Component {...pageProps} />
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
     </AuthProvider>
   );
 }
+
+export default MyApp;

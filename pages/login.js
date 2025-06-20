@@ -1,30 +1,74 @@
-import { useState } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../lib/AuthContext';
 
 export default function Login() {
+  console.log('🚨 Login: Component starting to render');
+  console.log('🔍 Login component rendering...');
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { signIn } = useAuth();
+  console.log('🚨 Login: About to call useAuth()');
+  const { signIn, user, loading: authLoading } = useAuth();
+  console.log('🚨 Login: useAuth() completed');
   const { message } = router.query;
 
+  console.log('🚨 Login: Component state - user:', user?.email, 'authLoading:', authLoading, 'loading:', loading, 'router.pathname:', router.pathname);
+  console.log('🔍 Login component state - user:', user?.email, 'authLoading:', authLoading, 'loading:', loading);
+
+  // Simple redirect check
+  if (!authLoading && user) {
+    console.log('🚨 Login: REDIRECT CONDITION MET - user is logged in, should redirect');
+    console.log('🔍 User already logged in, redirecting to profile');
+    if (typeof window !== 'undefined') {
+      console.log('🚨 Login: About to set window.location.href');
+      console.log('🔍 Setting window.location.href to /profile');
+      window.location.href = '/profile';
+      console.log('🚨 Login: window.location.href set');
+    }
+    console.log('🚨 Login: About to return null');
+    console.log('🔍 Returning null from login component');
+    return null; // Don't render anything while redirecting
+  }
+
+  console.log('🚨 Login: Continuing to render form - no redirect needed');
+  console.log('🔍 Login component continuing to render form...');
+
   const handleSubmit = async (e) => {
+    console.log('🚨 Login: Form submitted');
     e.preventDefault();
+    console.log('🔍 Login form submitted for:', email);
     try {
+      console.log('🚨 Login: About to setError(null)');
       setError(null);
+      console.log('🚨 Login: About to setLoading(true)');
       setLoading(true);
+      console.log('🔍 Calling signIn function...');
+      console.log('🚨 Login: About to call signIn()');
       await signIn(email, password);
+      console.log('🚨 Login: signIn() completed successfully');
+      console.log('🔍 SignIn function completed');
     } catch (error) {
+      console.error('🚨 Login: signIn() FAILED:', error);
+      console.error('🔍 Login error:', error);
+      console.log('🚨 Login: About to setError');
       setError(error.message);
     } finally {
+      console.log('🚨 Login: About to setLoading(false)');
       setLoading(false);
+      console.log('🔍 Login form loading set to false');
     }
   };
+
+  console.log('🚨 Login: About to return JSX');
+  console.log('🔍 Login component returning JSX...');
 
   return (
     <>
