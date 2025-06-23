@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import Navbar from '../components/Navbar';
-import Image from 'next/image';
 
 export default function Cart() {
   const [cartItems, setCartItems] = useState([]);
@@ -42,12 +40,9 @@ export default function Cart() {
 
   if (isLoading) {
     return (
-      <>
-        <Navbar />
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        </div>
-      </>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
     );
   }
 
@@ -57,8 +52,6 @@ export default function Cart() {
         <title>Shopping Cart - Your Shop</title>
         <meta name="description" content="Your shopping cart" />
       </Head>
-
-      <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Shopping Cart</h1>

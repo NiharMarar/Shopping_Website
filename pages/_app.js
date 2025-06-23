@@ -1,10 +1,14 @@
-import '../styles/globals.css';
-import { AuthProvider } from '../lib/AuthContext';
+'use client';
 
-export default function MyApp({ Component, pageProps }) {
+import Layout from '../components/Layout';
+import '../styles/globals.css';
+
+function MyApp({ Component, pageProps }) {
   return (
-    <AuthProvider>
+    <Layout>
       <Component {...pageProps} />
-    </AuthProvider>
+    </Layout>
   );
 }
+
+export default MyApp;
