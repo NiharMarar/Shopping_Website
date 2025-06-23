@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../lib/AuthContext';
@@ -5,6 +6,28 @@ import { useAuth } from '../lib/AuthContext';
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+=======
+'use client';
+
+import Link from 'next/link';
+import { ShoppingCartIcon, UserIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+
+export default function Navbar() {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+    }
+  };
+>>>>>>> Stashed changes
 
   return (
     <nav className="bg-white shadow-lg">
@@ -35,6 +58,7 @@ export default function Navbar() {
               </svg>
             </Link>
 
+<<<<<<< Updated upstream
             {/* User menu */}
             <div className="ml-4 relative">
               <button
@@ -75,6 +99,16 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+=======
+            {/* User menu - just show login/profile links for now */}
+            <Link href="/login" className="ml-3 text-gray-400 hover:text-gray-500">
+              <UserIcon className="h-6 w-6" />
+            </Link>
+            <Link href="/profile" className="ml-3 text-gray-400 hover:text-gray-500">
+              <span className="sr-only">Profile</span>
+              <UserIcon className="h-6 w-6" />
+            </Link>
+>>>>>>> Stashed changes
           </div>
         </div>
       </div>
