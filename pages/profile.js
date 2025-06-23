@@ -1,5 +1,7 @@
 'use client';
 
+console.log('🚨 profile.js: file loaded');
+
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -12,16 +14,17 @@ export default function Profile() {
 
   useEffect(() => {
     let ignore = false;
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       if (ignore) return;
-      setUser(data.user);
+      console.log('Session:', data.session);
+      setUser(data.session?.user ?? null);
       setLoading(false);
-      if (!data.user && !redirecting.current) {
+      if (!data.session?.user && !redirecting.current) {
         redirecting.current = true;
         console.log('🔒 Not logged in, redirecting to /login');
         router.replace('/login');
-      } else if (data.user) {
-        console.log('👤 User loaded:', data.user.email);
+      } else if (data.session?.user) {
+        console.log('👤 User loaded:', data.session.user.email);
       }
     });
     return () => { ignore = true; };
@@ -39,7 +42,6 @@ export default function Profile() {
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
       <h1 className="text-2xl font-bold mb-4">Profile</h1>
       <p><strong>Email:</strong> {user.email}</p>
-      {/* Add more user info here as needed */}
       <hr className="my-4" />
       <h2 className="text-xl font-semibold mb-2">Order History</h2>
       <p>(Order history will appear here in the future.)</p>
@@ -51,4 +53,4 @@ export default function Profile() {
       </button>
     </div>
   );
-} 
+}
