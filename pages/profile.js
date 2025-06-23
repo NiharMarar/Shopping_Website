@@ -46,7 +46,10 @@ export default function Profile() {
       <h2 className="text-xl font-semibold mb-2">Order History</h2>
       <p>(Order history will appear here in the future.)</p>
       <button
-        onClick={() => supabase.auth.signOut()}
+        onClick={async () => {
+          await supabase.auth.signOut();
+          window.location.href = '/login';
+        }}
         className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
       >
         Log out
