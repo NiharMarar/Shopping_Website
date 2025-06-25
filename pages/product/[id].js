@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Navbar from '../../components/Navbar';
 
 export default function ProductDetail() {
   const router = useRouter();
@@ -34,7 +33,6 @@ export default function ProductDetail() {
   if (isLoading) {
     return (
       <>
-        <Navbar />
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
         </div>
@@ -45,7 +43,6 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <>
-        <Navbar />
         <div className="text-center py-12">
           <h1 className="text-2xl font-bold text-gray-900">Product not found</h1>
         </div>
@@ -59,8 +56,6 @@ export default function ProductDetail() {
         <title>{product.name} - Your Shop</title>
         <meta name="description" content={product.description} />
       </Head>
-
-      <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">

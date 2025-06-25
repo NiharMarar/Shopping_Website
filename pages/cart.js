@@ -6,17 +6,8 @@ export default function Cart() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch cart items from API
-    // For now, using dummy data
-    setCartItems([
-      {
-        id: 1,
-        name: 'Sample Product',
-        price: 99.99,
-        image: 'https://via.placeholder.com/150',
-        quantity: 1
-      }
-    ]);
+    // TODO: Fetch cart items from API or localStorage
+    setCartItems([]); // Start with an empty cart
     setIsLoading(false);
   }, []);
 
