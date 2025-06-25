@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { useCart } from '../../lib/CartContext';
 
 export default function ProductDetail() {
   const router = useRouter();
@@ -9,6 +10,7 @@ export default function ProductDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const { addToCart, showToast } = useCart();
 
   useEffect(() => {
     if (id) {
@@ -26,8 +28,8 @@ export default function ProductDetail() {
   }, [id]);
 
   const handleAddToCart = () => {
-    // TODO: Implement cart functionality
-    console.log('Adding to cart:', { product, quantity });
+    addToCart(product, quantity);
+    showToast('Added to cart');
   };
 
   if (isLoading) {

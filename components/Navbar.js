@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { ShoppingCartIcon, UserIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
+import { useCart } from '../lib/CartContext';
 
 export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const router = useRouter();
+  const { uniqueCount } = useCart();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -49,9 +51,16 @@ export default function Navbar() {
             </button>
 
             {/* Cart */}
-            <Link href="/cart" className="p-2 text-gray-400 hover:text-gray-500">
-              <ShoppingCartIcon className="h-6 w-6" />
-            </Link>
+            <div className="relative">
+              <Link href="/cart" className="p-2 text-gray-400 hover:text-gray-500">
+                <ShoppingCartIcon className="h-6 w-6" />
+                {uniqueCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold">
+                    {uniqueCount}
+                  </span>
+                )}
+              </Link>
+            </div>
 
             {/* User menu - just show login/profile links for now */}
             <Link href="/login" className="ml-3 text-gray-400 hover:text-gray-500">
