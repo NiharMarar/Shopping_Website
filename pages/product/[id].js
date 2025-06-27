@@ -55,8 +55,8 @@ export default function ProductDetail() {
   return (
     <>
       <Head>
-        <title>{product.name} - Your Shop</title>
-        <meta name="description" content={product.description} />
+        <title>{product.product_name} - Your Shop</title>
+        <meta name="description" content={product.product_description} />
       </Head>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -65,8 +65,8 @@ export default function ProductDetail() {
           <div className="lg:max-w-lg lg:self-end">
             <div className="aspect-w-1 aspect-h-1 rounded-lg overflow-hidden">
               <img
-                src={product.image}
-                alt={product.name}
+                src={product.image_url}
+                alt={product.product_name}
                 className="w-full h-full object-center object-cover"
               />
             </div>
@@ -74,17 +74,17 @@ export default function ProductDetail() {
 
           {/* Product info */}
           <div className="mt-10 px-4 sm:px-0 sm:mt-16 lg:mt-0">
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">{product.name}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">{product.product_name}</h1>
             
             <div className="mt-3">
               <h2 className="sr-only">Product information</h2>
-              <p className="text-3xl text-gray-900">${product.price}</p>
+              <p className="text-3xl text-gray-900">${product.product_price}</p>
             </div>
 
             <div className="mt-6">
               <h3 className="sr-only">Description</h3>
               <div className="text-base text-gray-700 space-y-6">
-                <p>{product.description}</p>
+                <p>{product.product_description}</p>
               </div>
             </div>
 

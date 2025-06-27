@@ -10,8 +10,8 @@ export default async function handler(req, res) {
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
-      .eq('id', id)
+      .select('product_id, image_url, created_at, product_name, product_description, product_price')
+      .eq('product_id', id)
       .single();
 
     if (error) throw error;

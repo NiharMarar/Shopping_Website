@@ -1,11 +1,12 @@
 import Head from 'next/head';
 import { useCart } from '../lib/CartContext';
+import CheckoutButton from '../components/CheckoutButton';
 
 export default function Cart() {
   const { cartItems, removeFromCart } = useCart();
 
   const subtotal = cartItems.reduce(
-    (total, item) => total + (item.product.price * item.quantity),
+    (total, item) => total + (item.product.product_price * item.quantity),
     0
   );
 
@@ -29,11 +30,11 @@ export default function Cart() {
             <div className="lg:col-span-7">
               <ul className="border-t border-b border-gray-200 divide-y divide-gray-200">
                 {cartItems.map((item) => (
-                  <li key={item.product.id} className="flex py-6 sm:py-10">
+                  <li key={item.product.product_id} className="flex py-6 sm:py-10">
                     <div className="flex-shrink-0">
                       <img
-                        src={item.product.image}
-                        alt={item.product.name}
+                        src={item.product.image_url}
+                        alt={item.product.product_name}
                         className="w-24 h-24 rounded-md object-center object-cover sm:w-32 sm:h-32"
                       />
                     </div>
@@ -41,8 +42,8 @@ export default function Cart() {
                     <div className="ml-4 flex-1 flex flex-col sm:ml-6">
                       <div>
                         <div className="flex justify-between">
-                          <h4 className="text-sm font-medium text-gray-900">{item.product.name}</h4>
-                          <p className="ml-4 text-sm font-medium text-gray-900">${item.product.price}</p>
+                          <h4 className="text-sm font-medium text-gray-900">{item.product.product_name}</h4>
+                          <p className="ml-4 text-sm font-medium text-gray-900">${item.product.product_price}</p>
                         </div>
                       </div>
 
@@ -53,7 +54,7 @@ export default function Cart() {
 
                         <button
                           type="button"
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeFromCart(item.product.product_id)}
                           className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
                         >
                           Remove
@@ -82,12 +83,7 @@ export default function Cart() {
                 </div>
 
                 <div className="mt-6">
-                  <button
-                    type="button"
-                    className="w-full bg-indigo-600 border border-transparent rounded-md shadow-sm py-3 px-4 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Checkout
-                  </button>
+                  <CheckoutButton />
                 </div>
               </div>
             </div>
