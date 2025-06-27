@@ -1,41 +1,13 @@
-import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { useCart } from '../lib/CartContext';
 
 export default function Cart() {
-  const [cartItems, setCartItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // TODO: Fetch cart items from API or localStorage
-    setCartItems([]); // Start with an empty cart
-    setIsLoading(false);
-  }, []);
-
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const removeItem = (id) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
+  const { cartItems, removeFromCart } = useCart();
 
   const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + (item.product.price * item.quantity),
     0
   );
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -57,11 +29,11 @@ export default function Cart() {
             <div className="lg:col-span-7">
               <ul className="border-t border-b border-gray-200 divide-y divide-gray-200">
                 {cartItems.map((item) => (
-                  <li key={item.id} className="flex py-6 sm:py-10">
+                  <li key={item.product.id} className="flex py-6 sm:py-10">
                     <div className="flex-shrink-0">
                       <img
-                        src={item.image}
-                        alt={item.name}
+                        src={item.product.image}
+                        alt={item.product.name}
                         className="w-24 h-24 rounded-md object-center object-cover sm:w-32 sm:h-32"
                       />
                     </div>
@@ -69,33 +41,19 @@ export default function Cart() {
                     <div className="ml-4 flex-1 flex flex-col sm:ml-6">
                       <div>
                         <div className="flex justify-between">
-                          <h4 className="text-sm font-medium text-gray-900">{item.name}</h4>
-                          <p className="ml-4 text-sm font-medium text-gray-900">${item.price}</p>
+                          <h4 className="text-sm font-medium text-gray-900">{item.product.name}</h4>
+                          <p className="ml-4 text-sm font-medium text-gray-900">${item.product.price}</p>
                         </div>
                       </div>
 
                       <div className="mt-4 flex-1 flex items-end justify-between">
                         <div className="flex items-center">
-                          <label htmlFor={`quantity-${item.id}`} className="mr-4 text-sm text-gray-600">
-                            Qty
-                          </label>
-                          <select
-                            id={`quantity-${item.id}`}
-                            value={item.quantity}
-                            onChange={(e) => updateQuantity(item.id, Number(e.target.value))}
-                            className="rounded-md border-gray-300 py-1.5 text-base leading-5 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                          >
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                              <option key={num} value={num}>
-                                {num}
-                              </option>
-                            ))}
-                          </select>
+                          <span className="mr-4 text-sm text-gray-600">Qty: {item.quantity}</span>
                         </div>
 
                         <button
                           type="button"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeFromCart(item.product.id)}
                           className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
                         >
                           Remove
