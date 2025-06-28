@@ -52,3 +52,7 @@ Set up product database
 Implement payment system
 Add admin dashboard
 Set up order management
+
+testing:
+4242 4242 4242 4242 (successful payment)
+4000 0000 0000 0002 (declined payment)

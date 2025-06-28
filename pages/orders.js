@@ -1,0 +1,240 @@
+import { useEffect, useState } from 'react';
+import Head from 'next/head';
+import { useAuth } from '../lib/AuthContext';
+import { supabase } from '../lib/supabaseClient';
+
+export default function Orders() {
+  const { user } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchOrderNumber, setSearchOrderNumber] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  // Fetch user's orders (only for logged-in users)
+  useEffect(() => {
+    const fetchUserOrders = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          const { data, error } = await supabase
+            .from('orders')
+            .select(`
+              order_id,
+              order_number,
+              status,
+              total_amount,
+              created_at,
+              order_items (
+                quantity,
+                unit_price,
+                total_price,
+                product:products (
+                  product_name,
+                  image_url
+                )
+              )
+            `)
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+          setOrders(data || []);
+        } catch (error) {
+          console.error('Error fetching orders:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchUserOrders();
+  }, [user]);
+
+  // Search for order by order number (works for both guests and logged-in users)
+  const searchOrder = async () => {
+    if (!searchOrderNumber.trim()) return;
+
+    setSearchLoading(true);
+    setSearchResult(null);
+
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          order_id,
+          order_number,
+          status,
+          total_amount,
+          created_at,
+          order_items (
+            quantity,
+            unit_price,
+            total_price,
+            product:products (
+              product_name,
+              image_url
+            )
+          )
+        `)
+        .eq('order_number', searchOrderNumber.trim())
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          setSearchResult({ error: 'Order not found' });
+        } else {
+          throw error;
+        }
+      } else {
+        setSearchResult(data);
+      }
+    } catch (error) {
+      console.error('Error searching order:', error);
+      setSearchResult({ error: 'Error searching for order' });
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const OrderCard = ({ order, title = "Order Details" }) => (
+    <div className="bg-white shadow rounded-lg p-6">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="text-lg font-medium text-gray-900">
+            {title} #{order.order_number}
+          </h3>
+          <p className="text-sm text-gray-500">
+            {new Date(order.created_at).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-lg font-medium text-gray-900">
+            ${order.total_amount}
+          </p>
+          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+            order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+            order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-gray-100 text-gray-800'
+          }`}>
+            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          </span>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-200 pt-4">
+        <h4 className="text-sm font-medium text-gray-900 mb-3">Items:</h4>
+        <div className="space-y-2">
+          {order.order_items.map((item, index) => (
+            <div key={index} className="flex items-center space-x-3">
+              <img
+                src={item.product.image_url}
+                alt={item.product.product_name}
+                className="w-12 h-12 rounded object-cover"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  {item.product.product_name}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Qty: {item.quantity} × ${item.unit_price}
+                </p>
+              </div>
+              <p className="text-sm font-medium text-gray-900">
+                ${item.total_price}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <Head>
+        <title>Orders - Your Shop</title>
+        <meta name="description" content="Search and view your orders" />
+      </Head>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Orders</h1>
+
+        {/* Search Section */}
+        <div className="bg-white shadow rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Search Order</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Enter your order number to find your order details
+          </p>
+          
+          <div className="flex space-x-4">
+            <input
+              type="text"
+              placeholder="Enter order number (e.g., ORD-1234567890-123)"
+              value={searchOrderNumber}
+              onChange={(e) => setSearchOrderNumber(e.target.value)}
+              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={searchOrder}
+              disabled={searchLoading || !searchOrderNumber.trim()}
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              {searchLoading ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+
+          {/* Search Results */}
+          {searchResult && (
+            <div className="mt-6">
+              {searchResult.error ? (
+                <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                  <p className="text-red-800">{searchResult.error}</p>
+                </div>
+              ) : (
+                <OrderCard order={searchResult} title="Found Order" />
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* User's Orders (only for logged-in users) */}
+        {user && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">My Orders</h2>
+            
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading your orders...</p>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="text-center py-12">
+                <h3 className="text-xl font-medium text-gray-900">No orders yet</h3>
+                <p className="mt-2 text-gray-500">Start shopping to see your orders here.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {orders.map((order) => (
+                  <OrderCard key={order.order_id} order={order} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Guest message */}
+        {!user && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-6">
+            <h3 className="text-lg font-medium text-blue-900 mb-2">Not logged in?</h3>
+            <p className="text-blue-700">
+              You can still search for your orders using your order number above. 
+              If you create an account, you'll be able to see all your orders in one place.
+            </p>
+          </div>
+        )}
+      </main>
+    </>
+  );
+}
