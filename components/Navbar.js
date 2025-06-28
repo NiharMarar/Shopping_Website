@@ -5,6 +5,7 @@ import { ShoppingCartIcon, UserIcon, MagnifyingGlassIcon } from '@heroicons/reac
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useCart } from '../lib/CartContext';
+import { useAuth } from '../lib/AuthContext';
 
 export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -12,6 +13,7 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const router = useRouter();
   const { uniqueCount } = useCart();
+  const { user } = useAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -33,6 +35,9 @@ export default function Navbar() {
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <Link href="/products" className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-indigo-500">
                 Products
+              </Link>
+              <Link href="/orders" className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-indigo-500">
+                Orders
               </Link>
               <Link href="/categories" className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-indigo-500">
                 Categories
@@ -62,8 +67,8 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* User menu - just show login/profile links for now */}
-            <Link href="/login" className="ml-3 text-gray-400 hover:text-gray-500">
+            {/* User menu - show profile if logged in, login if not */}
+            <Link href={user ? "/profile" : "/login"} className="ml-3 text-gray-400 hover:text-gray-500">
               <UserIcon className="h-6 w-6" />
             </Link>
           </div>

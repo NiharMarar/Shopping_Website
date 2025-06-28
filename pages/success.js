@@ -17,6 +17,10 @@ export default function Success() {
     const createOrder = async () => {
       if (session_id && loading) {
         try {
+          console.log('Creating order with session_id:', session_id);
+          console.log('Cart items:', cartItems);
+          console.log('User:', user);
+
           // Create order in database
           const response = await fetch('/api/create-order', {
             method: 'POST',
@@ -24,13 +28,14 @@ export default function Success() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              sessionId,
-              cartItems,
+              sessionId: session_id,
+              cartItems: cartItems || [],
               user
             }),
           });
 
           const result = await response.json();
+          console.log('Order creation result:', result);
 
           if (result.success) {
             setOrderDetails({
@@ -39,11 +44,11 @@ export default function Success() {
               sessionId
             });
           } else {
-            setError('Failed to create order');
+            setError(result.error || 'Failed to create order');
           }
         } catch (err) {
           console.error('Error creating order:', err);
-          setError('Error processing order');
+          setError('Error processing order: ' + err.message);
         } finally {
           // Clear cart and stop loading
           clearCart();
@@ -127,8 +132,8 @@ export default function Success() {
               <div className="space-y-2 text-sm text-gray-600">
                 <p><span className="font-medium">Order Number:</span> <span className="font-mono">{orderDetails.orderNumber}</span></p>
                 <p><span className="font-medium">Session ID:</span> <span className="font-mono">{orderDetails.sessionId}</span></p>
-                <p><span className="font-medium">Total Items:</span> {cartItems.length}</p>
-                <p><span className="font-medium">Total Amount:</span> ${cartItems.reduce((total, item) => total + (item.product.product_price * item.quantity), 0).toFixed(2)}</p>
+                <p><span className="font-medium">Total Items:</span> {cartItems?.length || 0}</p>
+                <p><span className="font-medium">Total Amount:</span> ${(cartItems?.reduce((total, item) => total + (item.product.product_price * item.quantity), 0) || 0).toFixed(2)}</p>
               </div>
             </div>
           )}
