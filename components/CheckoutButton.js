@@ -25,7 +25,8 @@ export default function CheckoutButton() {
         },
         body: JSON.stringify({
           cartItems,
-          successUrl: `${window.location.origin}/success`,
+          // successUrl: `${window.location.origin}/success`,
+          successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
         }),
       });

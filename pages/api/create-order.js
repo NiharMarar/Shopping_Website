@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+console.log("🚨 /api/create-order.js loaded");
+
 // Initialize Supabase client with service role key for server-side operations
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -7,16 +9,26 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
+  console.log('🔄 API: create-order endpoint called');
+  
   if (req.method !== 'POST') {
+    console.log('❌ API: Method not allowed');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { sessionId, cartItems, user } = req.body;
 
-    console.log('Creating order with:', { sessionId, cartItemsLength: cartItems?.length, userId: user?.id });
+    console.log('📦 API: Creating order with:', { 
+      sessionId, 
+      cartItemsLength: cartItems?.length, 
+      userId: user?.id,
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    });
 
     if (!sessionId || !cartItems || cartItems.length === 0) {
+      console.log('❌ API: Missing required data');
       return res.status(400).json({ error: 'Missing required data' });
     }
 
@@ -26,9 +38,10 @@ export default async function handler(req, res) {
       0
     );
 
-    console.log('Total amount:', totalAmount);
+    console.log('💰 API: Total amount:', totalAmount);
 
     // Create order
+    console.log('📝 API: Creating order in database...');
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert([{
@@ -42,13 +55,14 @@ export default async function handler(req, res) {
       .single();
 
     if (orderError) {
-      console.error('Order creation error:', orderError);
+      console.error('❌ API: Order creation error:', orderError);
       throw orderError;
     }
 
-    console.log('Order created:', order);
+    console.log('✅ API: Order created:', order);
 
     // Create order items
+    console.log('📦 API: Creating order items...');
     const orderItems = cartItems.map(item => ({
       order_id: order.order_id,
       product_id: item.product.product_id,
@@ -62,20 +76,23 @@ export default async function handler(req, res) {
       .insert(orderItems);
 
     if (itemsError) {
-      console.error('Order items creation error:', itemsError);
+      console.error('❌ API: Order items creation error:', itemsError);
       throw itemsError;
     }
 
-    console.log('Order items created successfully');
+    console.log('✅ API: Order items created successfully');
 
-    res.status(200).json({ 
+    const response = { 
       success: true, 
       orderId: order.order_id,
       orderNumber: order.order_number 
-    });
+    };
+    
+    console.log('🎉 API: Sending success response:', response);
+    res.status(200).json(response);
 
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('💥 API: Error creating order:', error);
     res.status(500).json({ error: 'Error creating order: ' + error.message });
   }
 } 

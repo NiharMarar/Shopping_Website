@@ -4,6 +4,8 @@ import Head from 'next/head';
 import { useCart } from '../lib/CartContext';
 import { useAuth } from '../lib/AuthContext';
 
+console.log("🚨 Success page loaded");
+
 export default function Success() {
   const router = useRouter();
   const { session_id } = router.query;
@@ -12,16 +14,22 @@ export default function Success() {
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  console.log("🚨 session_id from router.query:", session_id);
 
   useEffect(() => {
     const createOrder = async () => {
+      console.log("🚨 useEffect running", { session_id, loading, cartItems });
       if (session_id && loading) {
         try {
+          // Store cart items before clearing them
+          const itemsToOrder = [...cartItems];
+          
           console.log('Creating order with session_id:', session_id);
-          console.log('Cart items:', cartItems);
+          console.log('Cart items:', itemsToOrder);
           console.log('User:', user);
 
           // Create order in database
+          console.log("🚨 About to call /api/create-order");
           const response = await fetch('/api/create-order', {
             method: 'POST',
             headers: {
@@ -29,7 +37,7 @@ export default function Success() {
             },
             body: JSON.stringify({
               sessionId: session_id,
-              cartItems: cartItems || [],
+              cartItems: itemsToOrder,
               user
             }),
           });
@@ -41,7 +49,7 @@ export default function Success() {
             setOrderDetails({
               orderId: result.orderId,
               orderNumber: result.orderNumber,
-              sessionId
+              sessionId: session_id // <-- use the variable from router.query
             });
           } else {
             setError(result.error || 'Failed to create order');
@@ -58,7 +66,7 @@ export default function Success() {
     };
 
     createOrder();
-  }, [session_id, loading, cartItems, user, clearCart]);
+  }, [session_id, loading, user, clearCart]);
 
   if (loading) {
     return (
