@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useCart } from '../lib/CartContext';
@@ -14,16 +14,22 @@ export default function Success() {
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [orderedItems, setOrderedItems] = useState(null);
+  const orderCreatedRef = useRef(false);
   console.log("🚨 session_id from router.query:", session_id);
 
   useEffect(() => {
     const createOrder = async () => {
       console.log("🚨 useEffect running", { session_id, loading, cartItems });
-      if (session_id && loading) {
+      if (session_id && loading && !orderCreatedRef.current) {
+        // Mark as processing to prevent double execution
+        orderCreatedRef.current = true;
+        
+        // Store cart items before clearing them
+        const itemsToOrder = [...cartItems];
+        setOrderedItems(itemsToOrder);
+        
         try {
-          // Store cart items before clearing them
-          const itemsToOrder = [...cartItems];
-          
           console.log('Creating order with session_id:', session_id);
           console.log('Cart items:', itemsToOrder);
           console.log('User:', user);
@@ -49,7 +55,7 @@ export default function Success() {
             setOrderDetails({
               orderId: result.orderId,
               orderNumber: result.orderNumber,
-              sessionId: session_id // <-- use the variable from router.query
+              sessionId: session_id
             });
           } else {
             setError(result.error || 'Failed to create order');
@@ -59,14 +65,14 @@ export default function Success() {
           setError('Error processing order: ' + err.message);
         } finally {
           // Clear cart and stop loading
-          clearCart();
+          clearCart(itemsToOrder.map(item => item.product.product_id));
           setLoading(false);
         }
       }
     };
 
     createOrder();
-  }, [session_id, loading, user, clearCart]);
+  }, [session_id, loading, user, cartItems]); // Removed clearCart and orderCreated from dependencies
 
   if (loading) {
     return (
@@ -140,8 +146,8 @@ export default function Success() {
               <div className="space-y-2 text-sm text-gray-600">
                 <p><span className="font-medium">Order Number:</span> <span className="font-mono">{orderDetails.orderNumber}</span></p>
                 <p><span className="font-medium">Session ID:</span> <span className="font-mono">{orderDetails.sessionId}</span></p>
-                <p><span className="font-medium">Total Items:</span> {cartItems?.length || 0}</p>
-                <p><span className="font-medium">Total Amount:</span> ${(cartItems?.reduce((total, item) => total + (item.product.product_price * item.quantity), 0) || 0).toFixed(2)}</p>
+                <p><span className="font-medium">Total Items:</span> {orderedItems?.length || 0}</p>
+                <p><span className="font-medium">Total Amount:</span> ${(orderedItems?.reduce((total, item) => total + (item.product.product_price * item.quantity), 0) || 0).toFixed(2)}</p>
               </div>
             </div>
           )}
