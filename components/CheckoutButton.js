@@ -17,6 +17,9 @@ export default function CheckoutButton() {
     setLoading(true);
 
     try {
+      // Save cart items to localStorage for use after redirect
+      localStorage.setItem('checkout_cart_items', JSON.stringify(cartItems));
+
       // Create checkout session
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',

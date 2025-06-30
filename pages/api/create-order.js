@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendOrderConfirmationEmail } from '../../lib/email';
 
 console.log("🚨 /api/create-order.js loaded");
 
@@ -81,6 +82,35 @@ export default async function handler(req, res) {
     }
 
     console.log('✅ API: Order items created successfully');
+
+    // Fetch order items with product info for the email
+    const { data: order_items_full, error: fetchItemsError } = await supabase
+      .from('order_items')
+      .select('quantity, unit_price, total_price, product:product_id(product_name)')
+      .eq('order_id', order.order_id);
+
+    if (fetchItemsError) {
+      console.error('❌ API: Fetch order items for email error:', fetchItemsError);
+    }
+
+    // Send order confirmation email if email is provided
+    const emailTo = user?.email || req.body.email;
+    if (emailTo) {
+      try {
+        await sendOrderConfirmationEmail({
+          to: emailTo,
+          order: {
+            order_number: order.order_number,
+            created_at: order.created_at,
+            order_items: order_items_full || [],
+            total_amount: totalAmount
+          }
+        });
+        console.log('📧 Order confirmation email sent to', emailTo);
+      } catch (emailErr) {
+        console.error('❌ Error sending order confirmation email:', emailErr);
+      }
+    }
 
     const response = { 
       success: true, 

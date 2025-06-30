@@ -25,8 +25,14 @@ export default function Success() {
         // Mark as processing to prevent double execution
         orderCreatedRef.current = true;
         
-        // Store cart items before clearing them
-        const itemsToOrder = [...cartItems];
+        // Try to get cart items from context, or from localStorage if empty
+        let itemsToOrder = cartItems;
+        if (!itemsToOrder || itemsToOrder.length === 0) {
+          const stored = localStorage.getItem('checkout_cart_items');
+          if (stored) {
+            itemsToOrder = JSON.parse(stored);
+          }
+        }
         setOrderedItems(itemsToOrder);
         
         try {
@@ -66,6 +72,7 @@ export default function Success() {
         } finally {
           // Clear cart and stop loading
           clearCart(itemsToOrder.map(item => item.product.product_id));
+          localStorage.removeItem('checkout_cart_items');
           setLoading(false);
         }
       }

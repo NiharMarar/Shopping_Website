@@ -29,7 +29,7 @@ export default function Orders() {
                 quantity,
                 unit_price,
                 total_price,
-                product:products (
+                product:product_id (
                   product_name,
                   image_url
                 )
@@ -71,7 +71,7 @@ export default function Orders() {
             quantity,
             unit_price,
             total_price,
-            product:products (
+            product:product_id (
               product_name,
               image_url
             )
