@@ -31,16 +31,42 @@ export default async function handler(req, res) {
     console.log('📦 API: Creating order with:', { 
       cartItemsLength: cartItems?.length, 
       userId: user_id,
+      sessionId: session_id,
       hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
     });
+
+    // Check if order already exists for this session
+    if (session_id) {
+      console.log('🔍 API: Checking for existing order with session_id:', session_id);
+      const { data: existingOrder, error: checkError } = await supabase
+        .from('orders')
+        .select('order_id, order_number, status')
+        .eq('stripe_session_id', session_id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('❌ API: Error checking for existing order:', checkError);
+        throw checkError;
+      }
+
+      if (existingOrder) {
+        console.log('⚠️ API: Order already exists for session:', existingOrder);
+        return res.status(200).json({ 
+          success: true, 
+          orderId: existingOrder.order_id,
+          orderNumber: existingOrder.order_number,
+          message: 'Order already exists'
+        });
+      }
+    }
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     // Calculate total
     const totalAmount = cartItems.reduce((total, item) => {
-      const price = item.products?.price || item.product?.product_price || 0;
-      return total + (price * item.quantity);
+      const price = item.products?.product_price || item.product?.product_price || item.price || 0;
+      return total + (price * (item.quantity || 1));
     }, 0);
 
     console.log('💰 API: Total amount:', totalAmount);
@@ -72,11 +98,11 @@ export default async function handler(req, res) {
     // Insert order items
     console.log('📦 API: Creating order items...');
     const orderItems = cartItems.map(item => {
-      const unit_price = item.products?.price || item.product?.product_price || item.unit_price || 0;
-      const quantity = item.quantity;
+      const unit_price = item.products?.product_price || item.product?.product_price || item.price || 0;
+      const quantity = item.quantity || 1;
       return {
         order_id: order.order_id,
-        product_id: item.product_id || item.product?.product_id,
+        product_id: item.product_id || item.products?.product_id || item.product?.product_id,
         quantity,
         unit_price,
         total_price: unit_price * quantity
@@ -96,7 +122,7 @@ export default async function handler(req, res) {
     const { data: order_items_full, error: fetchItemsError } = await supabase
       .from('order_items')
       .select('quantity, unit_price, total_price, product:product_id(product_name)')
-      .eq('order_id', order.id);
+      .eq('order_id', order.order_id);
 
     if (fetchItemsError) {
       console.error('❌ API: Fetch order items for email error:', fetchItemsError);
@@ -124,7 +150,7 @@ export default async function handler(req, res) {
 
     const response = { 
       success: true, 
-      orderId: order.id,
+      orderId: order.order_id,
       orderNumber: order.order_number 
     };
     

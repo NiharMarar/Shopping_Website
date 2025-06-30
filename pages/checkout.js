@@ -32,10 +32,15 @@ export default function Checkout() {
     if (user) {
       fetchCartItems();
     } else {
-      // Guest: load from localStorage
-      const stored = localStorage.getItem('checkout_cart_items');
+      // Guest: load from localStorage (temporary until we implement guest cart in DB)
+      const stored = localStorage.getItem('cartItems');
       if (stored) {
-        setCartItems(JSON.parse(stored));
+        try {
+          setCartItems(JSON.parse(stored));
+        } catch (e) {
+          console.error('Error parsing stored cart items:', e);
+          setCartItems([]);
+        }
       } else {
         setCartItems([]);
       }
@@ -45,17 +50,40 @@ export default function Checkout() {
 
   const fetchCartItems = async () => {
     try {
+      console.log('🔍 Fetching cart for user:', user.id);
+      // First, get the user's cart
+      const { data: cart, error: cartError } = await supabase
+        .from('carts')
+        .select('cart_id')
+        .eq('user_id', user.id)
+        .single();
+
+      console.log('📦 Cart query result:', { cart, cartError });
+
+      if (cartError) throw cartError;
+      if (!cart) {
+        console.log('❌ No cart found for user');
+        setCartItems([]);
+        setLoading(false);
+        return;
+      }
+
+      console.log('🛒 Found cart_id:', cart.cart_id);
+      // Then, get the cart items with product info
       const { data, error } = await supabase
         .from('cart_items')
         .select(`
           *,
           products (*)
         `)
-        .eq('user_id', user.id);
+        .eq('cart_id', cart.cart_id);
+
+      console.log('📋 Cart items query result:', { data, error });
 
       if (error) throw error;
-      setCartItems(data);
+      setCartItems(data || []);
     } catch (error) {
+      console.error('❌ Error fetching cart items:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -64,8 +92,10 @@ export default function Checkout() {
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      const price = item.products?.price || item.product?.product_price || 0;
-      return total + (price * item.quantity);
+      // Handle both logged-in user and guest cart item structures
+      const price = item.products?.product_price || item.product?.product_price || item.price || 0;
+      const quantity = item.quantity || 1;
+      return total + (price * quantity);
     }, 0);
   };
 
@@ -80,8 +110,11 @@ export default function Checkout() {
         setLoading(false);
         return;
       }
+      
       console.log('Submitting checkout with email:', email);
-      // Only create Stripe checkout session here
+      console.log('Cart items for checkout:', cartItems);
+      
+      // Create Stripe checkout session
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -90,19 +123,23 @@ export default function Checkout() {
         body: JSON.stringify({
           cartItems,
           shippingAddress,
-          email, // Pass email to the API for Stripe metadata
+          email,
           successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
         }),
       });
+      
       const { sessionId } = await response.json();
+      
       // Redirect to Stripe checkout
       const stripe = await stripePromise;
       const { error: stripeError } = await stripe.redirectToCheckout({
         sessionId
       });
+      
       if (stripeError) throw stripeError;
     } catch (error) {
+      console.error('❌ Checkout error:', error);
       setError(error.message);
       setLoading(false);
     }
@@ -277,22 +314,34 @@ export default function Checkout() {
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
               <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div key={item.id || item.product?.product_id} className="flex items-center space-x-4">
-                    <img
-                      src={item.products?.image || item.product?.image_url}
-                      alt={item.products?.name || item.product?.product_name}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-sm font-medium">{item.products?.name || item.product?.product_name}</h3>
-                      <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                {cartItems.map((item, index) => {
+                  // Handle both logged-in user and guest cart item structures
+                  const productName = item.products?.product_name || item.product?.product_name || item.name || 'Unknown Product';
+                  const productPrice = item.products?.product_price || item.product?.product_price || item.price || 0;
+                  const productImage = item.products?.image_url || item.product?.image_url || item.image || '';
+                  const quantity = item.quantity || 1;
+                  const itemTotal = productPrice * quantity;
+                  
+                  // Create a unique key
+                  const uniqueKey = item.cart_item_id || item.id || `item-${index}-${productName}`;
+                  
+                  return (
+                    <div key={uniqueKey} className="flex items-center space-x-4">
+                      <img
+                        src={productImage}
+                        alt={productName}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium">{productName}</h3>
+                        <p className="text-sm text-gray-500">Quantity: {quantity}</p>
+                      </div>
+                      <p className="text-sm font-medium">
+                        ${itemTotal.toFixed(2)}
+                      </p>
                     </div>
-                    <p className="text-sm font-medium">
-                      ${((item.products?.price || item.product?.product_price) * item.quantity).toFixed(2)}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-medium">
