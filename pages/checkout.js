@@ -32,8 +32,11 @@ export default function Checkout() {
     if (user) {
       fetchCartItems();
     } else {
-      // Guest: load from localStorage (temporary until we implement guest cart in DB)
-      const stored = localStorage.getItem('cartItems');
+      // Guest: load from localStorage (support both 'cartItems' and 'cart')
+      let stored = localStorage.getItem('cartItems');
+      if (!stored) {
+        stored = localStorage.getItem('cart');
+      }
       if (stored) {
         try {
           setCartItems(JSON.parse(stored));
