@@ -81,24 +81,7 @@ export default function Checkout() {
         return;
       }
       console.log('Submitting checkout with email:', email);
-      // Create order and order_items via API
-      const orderRes = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cartItems,
-          shippingAddress,
-          email,
-          user_id: user ? user.id : null
-        })
-      });
-      const orderData = await orderRes.json();
-      if (!orderData.success) {
-        setError(orderData.error || 'Order creation failed');
-        setLoading(false);
-        return;
-      }
-      // Create Stripe checkout session
+      // Only create Stripe checkout session here
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -106,9 +89,10 @@ export default function Checkout() {
         },
         body: JSON.stringify({
           cartItems,
+          shippingAddress,
+          email, // Pass email to the API for Stripe metadata
           successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
-          email, // Pass email to the API for Stripe metadata
         }),
       });
       const { sessionId } = await response.json();

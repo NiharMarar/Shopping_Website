@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { cartItems, shippingAddress, email, user_id } = req.body;
+  const { cartItems, shippingAddress, email, user_id, session_id } = req.body;
   if (!cartItems || cartItems.length === 0) {
     console.log('❌ API: Cart is empty');
     return res.status(400).json({ error: 'Cart is empty' });
@@ -56,7 +56,8 @@ export default async function handler(req, res) {
           total_amount: totalAmount,
           shipping_address: shippingAddress,
           status: 'pending',
-          email: email
+          email: email,
+          stripe_session_id: session_id || null
         }
       ])
       .select()
@@ -74,7 +75,7 @@ export default async function handler(req, res) {
       const unit_price = item.products?.price || item.product?.product_price || item.unit_price || 0;
       const quantity = item.quantity;
       return {
-        order_id: order.id,
+        order_id: order.order_id,
         product_id: item.product_id || item.product?.product_id,
         quantity,
         unit_price,
