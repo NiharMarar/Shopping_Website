@@ -18,6 +18,21 @@ export default function Success() {
   const orderCreatedRef = useRef(false);
   console.log("🚨 session_id from router.query:", session_id);
 
+  // Defensive: prevent navigation to the same URL
+  useEffect(() => {
+    const originalPush = router.push;
+    router.push = (...args) => {
+      if (args[0] === router.asPath) {
+        console.warn('Prevented navigation to the same URL:', args[0]);
+        return;
+      }
+      return originalPush(...args);
+    };
+    return () => {
+      router.push = originalPush;
+    };
+  }, [router]);
+
   useEffect(() => {
     const createOrder = async () => {
       console.log("🚨 useEffect running", { session_id, loading, cartItems });

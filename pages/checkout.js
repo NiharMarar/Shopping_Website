@@ -25,9 +25,23 @@ export default function Checkout() {
   });
   const [email, setEmail] = useState('');
 
+  // Diagnostic log
+  console.log('Checkout render: user =', user, 'loading =', loading);
+
   useEffect(() => {
-    fetchCartItems();
-  }, []);
+    if (user) {
+      fetchCartItems();
+    } else {
+      // Guest: load from localStorage
+      const stored = localStorage.getItem('checkout_cart_items');
+      if (stored) {
+        setCartItems(JSON.parse(stored));
+      } else {
+        setCartItems([]);
+      }
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchCartItems = async () => {
     try {
@@ -50,7 +64,8 @@ export default function Checkout() {
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      return total + (item.products.price * item.quantity);
+      const price = item.products?.price || item.product?.product_price || 0;
+      return total + (price * item.quantity);
     }, 0);
   };
 
@@ -60,36 +75,29 @@ export default function Checkout() {
     setError(null);
 
     try {
-      // Create order in database
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([
-          {
-            user_id: user.id,
-            total_amount: calculateTotal(),
-            shipping_address: shippingAddress,
-            status: 'pending'
-          }
-        ])
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = cartItems.map(item => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        price_at_time: item.products.price
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
+      if (!cartItems || cartItems.length === 0) {
+        setError('Your cart is empty.');
+        setLoading(false);
+        return;
+      }
+      console.log('Submitting checkout with email:', email);
+      // Create order and order_items via API
+      const orderRes = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cartItems,
+          shippingAddress,
+          email,
+          user_id: user ? user.id : null
+        })
+      });
+      const orderData = await orderRes.json();
+      if (!orderData.success) {
+        setError(orderData.error || 'Order creation failed');
+        setLoading(false);
+        return;
+      }
       // Create Stripe checkout session
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -103,17 +111,13 @@ export default function Checkout() {
           email, // Pass email to the API for Stripe metadata
         }),
       });
-
       const { sessionId } = await response.json();
-
       // Redirect to Stripe checkout
       const stripe = await stripePromise;
       const { error: stripeError } = await stripe.redirectToCheckout({
         sessionId
       });
-
       if (stripeError) throw stripeError;
-
     } catch (error) {
       setError(error.message);
       setLoading(false);
@@ -121,6 +125,7 @@ export default function Checkout() {
   };
 
   if (loading) {
+    console.log('Checkout: loading...');
     return (
       <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -129,6 +134,8 @@ export default function Checkout() {
       </div>
     );
   }
+
+  console.log('Checkout: rendering form');
 
   return (
     <>
@@ -258,7 +265,10 @@ export default function Checkout() {
                       required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        console.log('Email input changed:', e.target.value);
+                      }}
                     />
                   </div>
                 </div>
@@ -284,18 +294,18 @@ export default function Checkout() {
               <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
               <div className="space-y-4">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4">
+                  <div key={item.id || item.product?.product_id} className="flex items-center space-x-4">
                     <img
-                      src={item.products.image}
-                      alt={item.products.name}
+                      src={item.products?.image || item.product?.image_url}
+                      alt={item.products?.name || item.product?.product_name}
                       className="w-16 h-16 object-cover rounded"
                     />
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium">{item.products.name}</h3>
+                      <h3 className="text-sm font-medium">{item.products?.name || item.product?.product_name}</h3>
                       <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
                     </div>
                     <p className="text-sm font-medium">
-                      ${(item.products.price * item.quantity).toFixed(2)}
+                      ${((item.products?.price || item.product?.product_price) * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}

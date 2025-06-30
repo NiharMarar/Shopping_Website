@@ -2,56 +2,27 @@
 
 import { useState } from 'react';
 import { useCart } from '../lib/CartContext';
-import { getStripe } from '../lib/stripeClient';
+import { useRouter } from 'next/router';
 
 export default function CheckoutButton() {
-  const { cartItems, clearCart } = useCart();
+  const { cartItems } = useCart();
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
       alert('Your cart is empty!');
       return;
     }
-
     setLoading(true);
-
     try {
-      // Save cart items to localStorage for use after redirect
+      // Optionally, save cart items to localStorage for guest checkout recovery
       localStorage.setItem('checkout_cart_items', JSON.stringify(cartItems));
-
-      // Create checkout session
-      const response = await fetch('/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cartItems,
-          // successUrl: `${window.location.origin}/success`,
-          successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/cart`,
-        }),
-      });
-
-      const { sessionId, error } = await response.json();
-
-      if (error) {
-        throw new Error(error);
-      }
-
-      // Redirect to Stripe checkout
-      const stripe = await getStripe();
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId,
-      });
-
-      if (stripeError) {
-        throw new Error(stripeError.message);
-      }
+      // Navigate to the checkout page
+      router.push('/checkout');
     } catch (error) {
-      console.error('Checkout error:', error);
-      alert('Error processing checkout. Please try again.');
+      console.error('Navigation error:', error);
+      alert('Error proceeding to checkout. Please try again.');
     } finally {
       setLoading(false);
     }
