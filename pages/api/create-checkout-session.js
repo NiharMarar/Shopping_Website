@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { cartItems, successUrl, cancelUrl } = req.body;
+    const { cartItems, successUrl, cancelUrl, email } = req.body;
 
     if (!cartItems || cartItems.length === 0) {
       return res.status(400).json({ error: 'No items in cart' });
@@ -34,12 +34,14 @@ export default async function handler(req, res) {
       // success_url: successUrl || `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${req.headers.origin}/cart`,
+      customer_email: email || undefined, // Set Stripe's receipt email if provided
       metadata: {
         cartItems: JSON.stringify(cartItems.map(item => ({
           product_id: item.product.product_id,
           quantity: item.quantity,
           price: item.product.product_price
-        })))
+        }))),
+        checkout_email: email || '' // Add checkout email to metadata
       }
     });
 

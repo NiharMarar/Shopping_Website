@@ -36,6 +36,12 @@ export default function Success() {
         setOrderedItems(itemsToOrder);
         
         try {
+          // Fetch Stripe session to get the email
+          const sessionRes = await fetch(`/api/get-stripe-session?session_id=${session_id}`);
+          const sessionData = await sessionRes.json();
+          const checkoutEmail = sessionData?.metadata?.checkout_email || sessionData?.customer_email || '';
+          console.log('🚨 checkoutEmail from Stripe session:', checkoutEmail);
+
           console.log('Creating order with session_id:', session_id);
           console.log('Cart items:', itemsToOrder);
           console.log('User:', user);
@@ -50,7 +56,8 @@ export default function Success() {
             body: JSON.stringify({
               sessionId: session_id,
               cartItems: itemsToOrder,
-              user
+              user,
+              email: checkoutEmail // Pass the email to the API
             }),
           });
 

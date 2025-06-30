@@ -94,7 +94,9 @@ export default async function handler(req, res) {
     }
 
     // Send order confirmation email if email is provided
-    const emailTo = user?.email || req.body.email;
+    const emailTo = req.body.email;
+    console.log('📧 API: Email received from body:', emailTo);
+    console.log('📧 Attempting to send order confirmation email to:', emailTo);
     if (emailTo) {
       try {
         await sendOrderConfirmationEmail({

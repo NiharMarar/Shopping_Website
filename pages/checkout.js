@@ -23,6 +23,7 @@ export default function Checkout() {
     postal_code: '',
     country: 'US'
   });
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     fetchCartItems();
@@ -96,9 +97,10 @@ export default function Checkout() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          orderId: order.id,
-          items: cartItems,
-          shippingAddress
+          cartItems,
+          successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/cart`,
+          email, // Pass email to the API for Stripe metadata
         }),
       });
 
@@ -244,6 +246,20 @@ export default function Checkout() {
                         <option value="GB">United Kingdom</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      required
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                   </div>
                 </div>
 
