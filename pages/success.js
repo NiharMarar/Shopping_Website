@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../lib/AuthContext';
+import { useCart } from '../lib/CartContext';
 import { supabase } from '../lib/supabaseClient';
 
 console.log("🚨 Success page loaded");
@@ -11,35 +12,33 @@ export default function Success() {
   const router = useRouter();
   const { session_id } = router.query;
   const { user } = useAuth();
+  const { clearCart } = useCart();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderCreated, setOrderCreated] = useState(false);
   const orderCreatedRef = useRef(false);
   const processingRef = useRef(false);
+  const cartClearedRef = useRef(false);
 
   // Clear cart function for both logged-in and guest users
-  const clearCart = async () => {
+  const clearCartAndStorage = async () => {
+    if (cartClearedRef.current) {
+      console.log('🔄 Cart already cleared, skipping...');
+      return;
+    }
+    
     try {
-      if (user) {
-        // Clear logged-in user's cart from database
-        const { data: cart } = await supabase
-          .from('carts')
-          .select('cart_id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (cart) {
-          await supabase
-            .from('cart_items')
-            .delete()
-            .eq('cart_id', cart.cart_id);
-        }
-      } else {
-        // Clear guest user's cart from localStorage
+      // Use the cart context's clearCart function to update the UI
+      await clearCart();
+      
+      // Also clear localStorage for guest users as backup
+      if (!user) {
         localStorage.removeItem('cartItems');
         localStorage.removeItem('cart');
       }
+      
+      cartClearedRef.current = true;
       console.log('✅ Cart cleared successfully');
     } catch (error) {
       console.error('❌ Error clearing cart:', error);
@@ -48,33 +47,44 @@ export default function Success() {
 
   useEffect(() => {
     async function handleSuccess() {
-      if (!session_id || orderCreatedRef.current || processingRef.current) return;
+      if (!session_id || orderCreatedRef.current || processingRef.current) {
+        console.log('🔄 Skipping order processing:', {
+          hasSessionId: !!session_id,
+          orderCreated: orderCreatedRef.current,
+          processing: processingRef.current
+        });
+        return;
+      }
 
       processingRef.current = true;
       setLoading(true);
 
       try {
+        // First, try to find existing order by session_id to prevent duplicates
+        console.log('🔍 Checking for existing order with session_id:', session_id);
+        const existingOrderRes = await fetch(`/api/get-order-by-session?session_id=${session_id}`);
+        const existingOrder = await existingOrderRes.json();
+        
+        if (existingOrder.success) {
+          console.log('✅ Found existing order, loading details...');
+          setOrder(existingOrder.order);
+          setOrderCreated(true);
+          await clearCartAndStorage();
+          setLoading(false);
+          return;
+        }
+
+        // If no existing order, proceed with order creation
+        console.log('📝 No existing order found, creating new order...');
+        
         // Get checkout data from localStorage
         const checkoutData = JSON.parse(localStorage.getItem('checkoutData') || '{}');
         
         if (!checkoutData.cartItems || checkoutData.cartItems.length === 0) {
-          console.log('No checkout data found in localStorage, checking for existing order...');
-          
-          // Try to find existing order by session_id
-          const existingOrderRes = await fetch(`/api/get-order-by-session?session_id=${session_id}`);
-          const existingOrder = await existingOrderRes.json();
-          
-          if (existingOrder.success) {
-            setOrder(existingOrder.order);
-            setOrderCreated(true);
-            await clearCart();
-            setLoading(false);
-            return;
-          } else {
-            setError('No checkout data found and no existing order found. Please contact support with your session ID: ' + session_id);
-            setLoading(false);
-            return;
-          }
+          console.log('❌ No checkout data found in localStorage');
+          setError('No checkout data found. Please contact support with your session ID: ' + session_id);
+          setLoading(false);
+          return;
         }
 
         // Call /api/create-order with server-side data
@@ -108,7 +118,7 @@ export default function Success() {
         }
         
         setOrderCreated(true);
-        await clearCart();
+        await clearCartAndStorage();
         setLoading(false);
         
         // Clean up localStorage
@@ -123,6 +133,31 @@ export default function Success() {
     
     handleSuccess();
   }, [session_id, user]);
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      // Clear cart when leaving the success page
+      if (!cartClearedRef.current) {
+        clearCartAndStorage();
+      }
+    };
+
+    const handlePopState = () => {
+      // If user navigates away and comes back, ensure cart is cleared
+      if (!cartClearedRef.current) {
+        clearCartAndStorage();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   if (loading) {
     return (

@@ -61,6 +61,14 @@ export default function Checkout() {
     }
   }, [user]);
 
+  // Check if cart is empty and redirect if needed
+  useEffect(() => {
+    if (!loading && cartItems.length === 0) {
+      console.log('🛒 Cart is empty, redirecting to home...');
+      router.push('/');
+    }
+  }, [cartItems, loading, router]);
+
   // Sync billing address with shipping if checkbox is checked
   useEffect(() => {
     if (billingSameAsShipping) {
