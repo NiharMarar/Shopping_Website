@@ -70,6 +70,7 @@ export default function Success() {
           body: JSON.stringify({
             cartItems: checkoutData.cartItems,
             shippingAddress: checkoutData.shippingAddress,
+            billingAddress: checkoutData.billingAddress,
             email: checkoutData.email || session.customer_email,
             user_id: user ? user.id : null,
             session_id

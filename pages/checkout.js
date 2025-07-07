@@ -24,6 +24,16 @@ export default function Checkout() {
     country: 'US'
   });
   const [email, setEmail] = useState('');
+  const [billingAddress, setBillingAddress] = useState({
+    name: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: 'US'
+  });
+  const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
 
   // Diagnostic log
   console.log('Checkout render: user =', user, 'loading =', loading);
@@ -50,6 +60,13 @@ export default function Checkout() {
       setLoading(false);
     }
   }, [user]);
+
+  // Sync billing address with shipping if checkbox is checked
+  useEffect(() => {
+    if (billingSameAsShipping) {
+      setBillingAddress({ ...shippingAddress });
+    }
+  }, [billingSameAsShipping, shippingAddress]);
 
   const fetchCartItems = async () => {
     try {
@@ -126,6 +143,7 @@ export default function Checkout() {
         body: JSON.stringify({
           cartItems,
           shippingAddress,
+          billingAddress,
           email,
           successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
@@ -294,6 +312,125 @@ export default function Checkout() {
                         console.log('Email input changed:', e.target.value);
                       }}
                     />
+                  </div>
+                </div>
+
+                {/* Billing Address Section */}
+                <div className="mt-8">
+                  <label className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={billingSameAsShipping}
+                      onChange={e => setBillingSameAsShipping(e.target.checked)}
+                      className="mr-2"
+                    />
+                    Billing address is the same as shipping address
+                  </label>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="billing_name" className="block text-sm font-medium text-gray-700">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        id="billing_name"
+                        required
+                        disabled={billingSameAsShipping}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        value={billingAddress.name}
+                        onChange={e => setBillingAddress({ ...billingAddress, name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="billing_line1" className="block text-sm font-medium text-gray-700">
+                        Address Line 1
+                      </label>
+                      <input
+                        type="text"
+                        id="billing_line1"
+                        required
+                        disabled={billingSameAsShipping}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        value={billingAddress.line1}
+                        onChange={e => setBillingAddress({ ...billingAddress, line1: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="billing_line2" className="block text-sm font-medium text-gray-700">
+                        Address Line 2
+                      </label>
+                      <input
+                        type="text"
+                        id="billing_line2"
+                        disabled={billingSameAsShipping}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        value={billingAddress.line2}
+                        onChange={e => setBillingAddress({ ...billingAddress, line2: e.target.value })}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="billing_city" className="block text-sm font-medium text-gray-700">
+                          City
+                        </label>
+                        <input
+                          type="text"
+                          id="billing_city"
+                          required
+                          disabled={billingSameAsShipping}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          value={billingAddress.city}
+                          onChange={e => setBillingAddress({ ...billingAddress, city: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="billing_state" className="block text-sm font-medium text-gray-700">
+                          State
+                        </label>
+                        <input
+                          type="text"
+                          id="billing_state"
+                          required
+                          disabled={billingSameAsShipping}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          value={billingAddress.state}
+                          onChange={e => setBillingAddress({ ...billingAddress, state: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="billing_postal_code" className="block text-sm font-medium text-gray-700">
+                          Postal Code
+                        </label>
+                        <input
+                          type="text"
+                          id="billing_postal_code"
+                          required
+                          disabled={billingSameAsShipping}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          value={billingAddress.postal_code}
+                          onChange={e => setBillingAddress({ ...billingAddress, postal_code: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="billing_country" className="block text-sm font-medium text-gray-700">
+                          Country
+                        </label>
+                        <select
+                          id="billing_country"
+                          required
+                          disabled={billingSameAsShipping}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          value={billingAddress.country}
+                          onChange={e => setBillingAddress({ ...billingAddress, country: e.target.value })}
+                        >
+                          <option value="US">United States</option>
+                          <option value="CA">Canada</option>
+                          <option value="GB">United Kingdom</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

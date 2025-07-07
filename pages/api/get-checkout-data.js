@@ -53,6 +53,7 @@ export default async function handler(req, res) {
     res.status(200).json({
       cartItems: checkoutSession.cart_items,
       shippingAddress: checkoutSession.shipping_address,
+      billingAddress: checkoutSession.billing_address,
       email: checkoutSession.email
     });
 

@@ -7,12 +7,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { cartItems, successUrl, cancelUrl, email, shippingAddress } = req.body;
+    const { cartItems, successUrl, cancelUrl, email, shippingAddress, billingAddress } = req.body;
     
     console.log('🔍 /api/create-checkout-session received:', {
       cartItemsLength: cartItems?.length,
       email,
-      hasShippingAddress: !!shippingAddress
+      hasShippingAddress: !!shippingAddress,
+      hasBillingAddress: !!billingAddress
     });
 
     // Debug: Log the first cart item structure
@@ -82,6 +83,7 @@ export default async function handler(req, res) {
           session_token: sessionToken,
           cart_items: cartItems,
           shipping_address: shippingAddress,
+          billing_address: billingAddress,
           email: email,
           created_at: new Date().toISOString(),
           expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour expiry
