@@ -96,3 +96,7 @@ Summary Table for Quick Reference
 | Order | orders | { order_id, user_id, email, shipping_address, ... } |
 | Order Items | order_items | [ { order_item_id, order_id, product_id, quantity, total_price } ] |
 Keep this as a reference so you don’t get tripped up by variable naming or structure differences!
+
+
+Tracking number:
+9400100000000000000000

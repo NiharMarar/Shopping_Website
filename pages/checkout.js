@@ -163,6 +163,15 @@ export default function Checkout() {
       console.log('Submitting checkout with email:', email);
       console.log('Cart items for checkout:', cartItems);
       
+      // Store checkout data in localStorage for success page
+      const checkoutData = {
+        cartItems,
+        shippingAddress,
+        billingAddress,
+        email
+      };
+      localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+      
       // Create Stripe checkout session
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',

@@ -3,19 +3,48 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../lib/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 console.log("🚨 Success page loaded");
 
 export default function Success() {
   const router = useRouter();
   const { session_id } = router.query;
-  const { user, clearCart } = useAuth();
+  const { user } = useAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderCreated, setOrderCreated] = useState(false);
   const orderCreatedRef = useRef(false);
   const processingRef = useRef(false);
+
+  // Clear cart function for both logged-in and guest users
+  const clearCart = async () => {
+    try {
+      if (user) {
+        // Clear logged-in user's cart from database
+        const { data: cart } = await supabase
+          .from('carts')
+          .select('cart_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (cart) {
+          await supabase
+            .from('cart_items')
+            .delete()
+            .eq('cart_id', cart.cart_id);
+        }
+      } else {
+        // Clear guest user's cart from localStorage
+        localStorage.removeItem('cartItems');
+        localStorage.removeItem('cart');
+      }
+      console.log('✅ Cart cleared successfully');
+    } catch (error) {
+      console.error('❌ Error clearing cart:', error);
+    }
+  };
 
   useEffect(() => {
     async function handleSuccess() {
@@ -29,9 +58,23 @@ export default function Success() {
         const checkoutData = JSON.parse(localStorage.getItem('checkoutData') || '{}');
         
         if (!checkoutData.cartItems || checkoutData.cartItems.length === 0) {
-          setError('No checkout data found');
-          setLoading(false);
-          return;
+          console.log('No checkout data found in localStorage, checking for existing order...');
+          
+          // Try to find existing order by session_id
+          const existingOrderRes = await fetch(`/api/get-order-by-session?session_id=${session_id}`);
+          const existingOrder = await existingOrderRes.json();
+          
+          if (existingOrder.success) {
+            setOrder(existingOrder.order);
+            setOrderCreated(true);
+            await clearCart();
+            setLoading(false);
+            return;
+          } else {
+            setError('No checkout data found and no existing order found. Please contact support with your session ID: ' + session_id);
+            setLoading(false);
+            return;
+          }
         }
 
         // Call /api/create-order with server-side data
@@ -42,7 +85,7 @@ export default function Success() {
             cartItems: checkoutData.cartItems,
             shippingAddress: checkoutData.shippingAddress,
             billingAddress: checkoutData.billingAddress,
-            email: checkoutData.email || session.customer_email,
+            email: checkoutData.email,
             user_id: user ? user.id : null,
             session_id
           })
@@ -65,8 +108,11 @@ export default function Success() {
         }
         
         setOrderCreated(true);
-        clearCart();
+        await clearCart();
         setLoading(false);
+        
+        // Clean up localStorage
+        localStorage.removeItem('checkoutData');
         
       } catch (err) {
         console.error('❌ Error in success page:', err);
@@ -76,7 +122,7 @@ export default function Success() {
     }
     
     handleSuccess();
-  }, [session_id, user, clearCart]);
+  }, [session_id, user]);
 
   if (loading) {
     return (
