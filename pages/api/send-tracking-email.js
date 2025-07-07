@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 // Initialize email transporter
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.SMTP_USER,
