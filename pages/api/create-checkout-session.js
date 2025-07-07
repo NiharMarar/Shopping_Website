@@ -64,14 +64,31 @@ export default async function handler(req, res) {
       success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl || `${req.headers.origin}/cart`,
       customer_email: email || undefined, // Set Stripe's receipt email if provided
+      billing_address_collection: 'required', // Require billing address at checkout
+      payment_intent_data: {
+        receipt_email: email || undefined,
+        shipping: {
+          name: shippingAddress?.name,
+          address: {
+            line1: shippingAddress?.line1,
+            line2: shippingAddress?.line2,
+            city: shippingAddress?.city,
+            state: shippingAddress?.state,
+            postal_code: shippingAddress?.postal_code,
+            country: shippingAddress?.country,
+          }
+        }
+        // Note: Stripe does not allow pre-filling billing address for security reasons
+      },
       metadata: {
-        // Store minimal cart info to stay under 500 chars
         cartItemsCount: cartItems.length.toString(),
         email: email || '',
-        // Only store essential shipping info
         shippingName: shippingAddress?.name || '',
         shippingCity: shippingAddress?.city || '',
-        sessionToken: sessionToken
+        sessionToken: sessionToken,
+        // Add billing address to metadata for your own reference (not used by Stripe)
+        billingName: billingAddress?.name || '',
+        billingCity: billingAddress?.city || ''
       }
     });
 

@@ -119,10 +119,39 @@ export default function Checkout() {
     }, 0);
   };
 
+  // Address validation helper
+  function validateAddress(address, label = 'Address') {
+    if (!address) return `${label} is required.`;
+    if (!address.name) return `${label}: Full Name is required.`;
+    if (!address.line1) return `${label}: Address Line 1 is required.`;
+    if (!address.city) return `${label}: City is required.`;
+    if (!address.state) return `${label}: State is required.`;
+    if (!address.postal_code) return `${label}: Postal Code is required.`;
+    if (!address.country) return `${label}: Country is required.`;
+    return null;
+  }
+
+  function validateEmail(email) {
+    if (!email) return 'Email is required.';
+    // Simple email regex
+    if (!/^\S+@\S+\.\S+$/.test(email)) return 'Invalid email address.';
+    return null;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validate addresses and email
+    const shippingError = validateAddress(shippingAddress, 'Shipping address');
+    const billingError = !billingSameAsShipping ? validateAddress(billingAddress, 'Billing address') : null;
+    const emailError = validateEmail(email);
+    if (shippingError || billingError || emailError) {
+      setError(shippingError || billingError || emailError);
+      setLoading(false);
+      return;
+    }
 
     try {
       if (!cartItems || cartItems.length === 0) {

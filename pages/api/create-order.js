@@ -140,7 +140,9 @@ export default async function handler(req, res) {
             order_number: order.order_number,
             created_at: order.created_at,
             order_items: order_items_full || [],
-            total_amount: totalAmount
+            total_amount: totalAmount,
+            shipping_address: order.shipping_address,
+            billing_address: order.billing_address
           }
         });
         console.log('📧 Order confirmation email sent to', email);
