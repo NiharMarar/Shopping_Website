@@ -22,7 +22,11 @@ export default function Orders() {
             .select(`
               order_id,
               order_number,
-              status,
+              order_status,
+              tracking_number,
+              tracking_carrier,
+              shipped_at,
+              delivered_at,
               total_amount,
               created_at,
               order_items (
@@ -64,7 +68,11 @@ export default function Orders() {
         .select(`
           order_id,
           order_number,
-          status,
+          order_status,
+          tracking_number,
+          tracking_carrier,
+          shipped_at,
+          delivered_at,
           total_amount,
           created_at,
           order_items (
@@ -97,6 +105,33 @@ export default function Orders() {
     }
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'delivered': return 'bg-green-100 text-green-800';
+      case 'shipped': return 'bg-blue-100 text-blue-800';
+      case 'processing': return 'bg-yellow-100 text-yellow-800';
+      case 'pending': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTrackingUrl = (carrier, number) => {
+    if (!carrier || !number) return null;
+    
+    switch (carrier.toUpperCase()) {
+      case 'USPS':
+        return `https://tools.usps.com/go/TrackConfirmAction?tLabels=${number}`;
+      case 'FEDEX':
+        return `https://www.fedex.com/fedextrack/?trknbr=${number}`;
+      case 'UPS':
+        return `https://www.ups.com/track?tracknum=${number}`;
+      case 'DHL':
+        return `https://www.dhl.com/en/express/tracking.html?AWB=${number}`;
+      default:
+        return `https://www.google.com/search?q=${carrier}+tracking+${number}`;
+    }
+  };
+
   const OrderCard = ({ order, title = "Order Details" }) => (
     <div className="bg-white shadow rounded-lg p-6">
       <div className="flex justify-between items-start mb-4">
@@ -112,18 +147,50 @@ export default function Orders() {
           <p className="text-lg font-medium text-gray-900">
             ${order.total_amount}
           </p>
-          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-            order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-            order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
-            order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.order_status)}`}>
+            {order.order_status ? order.order_status.charAt(0).toUpperCase() + order.order_status.slice(1) : 'Pending'}
           </span>
         </div>
       </div>
 
-      <div className="border-t border-gray-200 pt-4">
+      {/* Tracking Information */}
+      {order.tracking_number && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <h4 className="text-sm font-medium text-blue-900 mb-2">Tracking Information</h4>
+          <div className="space-y-1">
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">Carrier:</span> {order.tracking_carrier || 'USPS'}
+            </p>
+            <p className="text-sm text-blue-800">
+              <span className="font-medium">Tracking Number:</span> 
+              <span className="font-mono ml-1">{order.tracking_number}</span>
+            </p>
+            {order.shipped_at && (
+              <p className="text-xs text-blue-600">
+                Shipped: {new Date(order.shipped_at).toLocaleDateString()}
+              </p>
+            )}
+            {order.delivered_at && (
+              <p className="text-xs text-blue-600">
+                Delivered: {new Date(order.delivered_at).toLocaleDateString()}
+              </p>
+            )}
+            {getTrackingUrl(order.tracking_carrier, order.tracking_number) && (
+              <a
+                href={getTrackingUrl(order.tracking_carrier, order.tracking_number)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+              >
+                Track Package
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Order Items */}
+      <div className="mb-4">
         <h4 className="text-sm font-medium text-gray-900 mb-3">Items:</h4>
         <div className="space-y-2">
           {order.order_items.map((item, index) => (
