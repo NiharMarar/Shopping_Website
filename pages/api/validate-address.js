@@ -5,14 +5,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { trackingNumber } = req.body;
-  if (!trackingNumber) {
-    return res.status(400).json({ error: 'Missing tracking number' });
+  const { address } = req.body;
+  if (!address) {
+    return res.status(400).json({ error: 'Missing address' });
   }
 
   try {
     const token = await getUspsOAuthToken();
-    const uspsUrl = 'https://apis-tem.usps.com/track/v2/tracking';
+    const uspsUrl = 'https://apis-tem.usps.com/address/v3/validate';
     const uspsRes = await fetch(uspsUrl, {
       method: 'POST',
       headers: {
@@ -20,14 +20,11 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        trackingNumber: [trackingNumber],
+        address: [address], // USPS expects an array of addresses
       }),
     });
 
-    // Log the raw response for debugging
     const rawText = await uspsRes.text();
-    console.log('USPS raw response:', rawText);
-
     let uspsData;
     try {
       uspsData = JSON.parse(rawText);
