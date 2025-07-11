@@ -44,6 +44,12 @@ export default async function handler(req, res) {
     // Mark session as used and delete it to prevent reuse
     await supabase
       .from('checkout_sessions')
+      .update({ used_at: new Date().toISOString() })
+      .eq('session_token', sessionToken);
+    
+    // Delete the session after marking it as used
+    await supabase
+      .from('checkout_sessions')
       .delete()
       .eq('session_token', sessionToken);
 

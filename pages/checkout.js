@@ -151,7 +151,7 @@ export default function Checkout() {
     setLoading(true);
     setError(null);
 
-    // Validate addresses and email
+    // Validate addresses and email (basic client-side)
     const shippingError = validateAddress(shippingAddress, 'Shipping address');
     const billingError = !billingSameAsShipping ? validateAddress(billingAddress, 'Billing address') : null;
     const emailError = validateEmail(email);
@@ -160,6 +160,35 @@ export default function Checkout() {
       setLoading(false);
       return;
     }
+
+    // --- Shippo address validation ---
+    try {
+      const res = await fetch('/api/validate-address', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: {
+          name: shippingAddress.name,
+          street1: shippingAddress.line1,
+          street2: shippingAddress.line2,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          zip: shippingAddress.postal_code,
+          country: shippingAddress.country,
+          email: email,
+        } }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || data.data.validation_results?.is_valid === false) {
+        setError('Shipping address is invalid. Please check your address and try again.');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError('Error validating address. Please try again.');
+      setLoading(false);
+      return;
+    }
+    // --- End Shippo address validation ---
 
     try {
       if (!cartItems || cartItems.length === 0) {
@@ -206,8 +235,8 @@ export default function Checkout() {
       
       if (stripeError) throw stripeError;
     } catch (error) {
-      console.error('❌ Checkout error:', error);
       setError(error.message);
+    } finally {
       setLoading(false);
     }
   };

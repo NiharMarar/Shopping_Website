@@ -11,32 +11,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    const token = await getUspsOAuthToken();
-    const uspsUrl = 'https://apis-tem.usps.com/address/v3/validate';
-    const uspsRes = await fetch(uspsUrl, {
+    const response = await fetch('https://api.goshippo.com/addresses/', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `ShippoToken ${process.env.SHIPPO_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        address: [address], // USPS expects an array of addresses
+        ...address,
+        validate: true,
       }),
     });
 
-    const rawText = await uspsRes.text();
-    let uspsData;
-    try {
-      uspsData = JSON.parse(rawText);
-    } catch (e) {
-      return res.status(500).json({ error: 'USPS API did not return valid JSON', raw: rawText });
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(400).json({ error: data });
     }
 
-    if (!uspsRes.ok) {
-      return res.status(500).json({ error: uspsData });
-    }
-    return res.status(200).json({ data: uspsData });
+    res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 } 

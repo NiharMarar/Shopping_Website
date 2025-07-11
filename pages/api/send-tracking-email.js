@@ -108,8 +108,12 @@ function buildTrackingEmail({ orderNumber, trackingNumber, trackingCarrier, orde
   // Email subject based on status
   const getSubject = (status) => {
     switch (status) {
+      case 'in_transit':
+        return `Your order is being prepared for shipment - ${orderNumber}`;
       case 'shipped':
-        return `Your order has been shipped! - ${orderNumber}`;
+        return `Your order has shipped! - ${orderNumber}`;
+      case 'out_for_delivery':
+        return `Your order is out for delivery! - ${orderNumber}`;
       case 'delivered':
         return `Your order has been delivered! - ${orderNumber}`;
       default:
@@ -120,15 +124,25 @@ function buildTrackingEmail({ orderNumber, trackingNumber, trackingCarrier, orde
   // Email content based on status
   const getStatusMessage = (status) => {
     switch (status) {
+      case 'in_transit':
+        return `
+          <h2>Your order is being prepared for shipment 📦</h2>
+          <p>We have received your order and it is being prepared for shipment. You will receive another email when your order ships.</p>
+        `;
       case 'shipped':
         return `
-          <h2>Your order has been shipped! 🚚</h2>
-          <p>Great news! Your order has been shipped and is on its way to you.</p>
+          <h2>Your order has shipped! 🚚</h2>
+          <p>Great news! Your order has shipped and is on its way to you.</p>
+        `;
+      case 'out_for_delivery':
+        return `
+          <h2>Your order is out for delivery! 🚚</h2>
+          <p>Your order is out for delivery and should arrive soon.</p>
         `;
       case 'delivered':
         return `
           <h2>Your order has been delivered! 📦</h2>
-          <p>Your order has been successfully delivered to your address.</p>
+          <p>Your order has been delivered to your address. We hope you enjoy your purchase!</p>
         `;
       default:
         return `
@@ -141,29 +155,24 @@ function buildTrackingEmail({ orderNumber, trackingNumber, trackingCarrier, orde
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       ${getStatusMessage(orderStatus)}
-      
       <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="margin-top: 0;">Order Details</h3>
         <p><strong>Order Number:</strong> <span style="font-family:monospace;">${orderNumber}</span></p>
-        <p><strong>Status:</strong> ${orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}</p>
+        <p><strong>Status:</strong> ${orderStatus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</p>
         <p><strong>Carrier:</strong> ${trackingCarrier}</p>
         <p><strong>Tracking Number:</strong> <span style="font-family:monospace;">${trackingNumber}</span></p>
       </div>
-
       <div style="margin: 20px 0;">
         <a href="${trackingUrl}" 
            style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
           Track Your Package
         </a>
       </div>
-
       <div style="margin: 20px 0;">
         <h3>Order Items:</h3>
         <ul style="padding-left: 20px;">${itemsHtml}</ul>
       </div>
-
       <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-
       <div style="font-size: 14px; color: #666;">
         <p>If you have any questions about your order, please reply to this email and include your order number.</p>
         <p>Thank you for shopping with us!</p>

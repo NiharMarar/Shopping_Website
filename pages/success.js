@@ -109,7 +109,28 @@ export default function Success() {
           return;
         }
         
-        // Fetch the created order details
+        // --- Shippo label creation integration ---
+        // Call /api/create-label-for-order with the new orderId
+        console.log('🚢 Creating shipping label for order:', orderData.orderId);
+        const labelRes = await fetch('/api/create-label-for-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_id: orderData.orderId }),
+        });
+        
+        const labelData = await labelRes.json();
+        console.log('🚢 Label creation response:', labelData);
+        
+        if (!labelRes.ok) {
+          console.error('❌ Label creation failed:', labelData);
+          // Don't fail the entire order process if label creation fails
+          // The order is still valid, just without tracking initially
+        } else if (labelData.tracking_number) {
+          console.log('✅ Label created successfully with tracking:', labelData.tracking_number);
+        }
+        // --- End Shippo integration ---
+        
+        // Fetch the created order details (now with tracking number)
         const orderDetailsRes = await fetch(`/api/get-order-details?orderId=${orderData.orderId}`);
         const orderDetails = await orderDetailsRes.json();
         
@@ -291,6 +312,26 @@ export default function Success() {
                       <p><span className="font-medium">Tracking Number:</span> <span className="font-mono text-blue-600">{order.tracking_number}</span></p>
                       {order.shipped_at && (
                         <p><span className="font-medium">Shipped:</span> {new Date(order.shipped_at).toLocaleDateString()}</p>
+                      )}
+                      {order.label_url && (
+                        <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                          <a
+                            href={order.label_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors text-center"
+                          >
+                            Download Label (PDF)
+                          </a>
+                          <a
+                            href={`https://tools.usps.com/go/TrackConfirmAction_input?origTrackNum=${order.tracking_number}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-center"
+                          >
+                            Track Package
+                          </a>
+                        </div>
                       )}
                     </div>
                   </div>
