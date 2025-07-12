@@ -90,13 +90,13 @@ export default function TrackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full border border-blue-100">
-        <h1 className="text-3xl font-extrabold mb-6 text-center text-blue-700">USPS Tracking</h1>
+    <div className="min-h-screen bg-cyberpunk-bg flex flex-col items-center justify-center p-4">
+      <div className="bg-cyberpunk-surface p-8 rounded-xl shadow-neon max-w-md w-full border border-cyberpunk-neonBlue">
+        <h1 className="text-3xl font-nexus font-extrabold mb-6 text-center text-cyberpunk-neonBlue drop-shadow-[0_0_8px_#00ffe7]">USPS Tracking</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            className="w-full border-2 border-blue-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full border-2 border-cyberpunk-neonBlue rounded px-3 py-2 bg-cyberpunk-bg text-cyberpunk-neonBlue placeholder-cyberpunk-neonPurple font-nexus focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonPink"
             placeholder="Enter USPS Tracking Number"
             value={trackingNumber}
             onChange={e => setTrackingNumber(e.target.value)}
@@ -106,14 +106,14 @@ export default function TrackPage() {
           <div className="flex gap-2">
             <button
               type="submit"
-              className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-semibold shadow"
+              className="flex-1 bg-cyberpunk-neonBlue text-cyberpunk-bg py-2 rounded font-nexus font-bold hover:bg-cyberpunk-neonPink hover:text-cyberpunk-bg shadow-neon border border-cyberpunk-neonPink transition-colors"
               disabled={loading || !trackingNumber}
             >
               {loading ? 'Tracking...' : 'Track Package'}
             </button>
             <button
               type="button"
-              className="flex-1 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300 font-semibold shadow"
+              className="flex-1 bg-cyberpunk-surface text-cyberpunk-neonPurple py-2 rounded font-nexus font-bold hover:bg-cyberpunk-neonBlue hover:text-cyberpunk-bg shadow-neon border border-cyberpunk-neonBlue transition-colors"
               onClick={handleClear}
               disabled={loading && !result && !error}
             >
@@ -121,10 +121,10 @@ export default function TrackPage() {
             </button>
           </div>
         </form>
-        {error && <div className="mt-4 text-red-600 text-center font-semibold">{error}</div>}
+        {error && <div className="mt-4 text-cyberpunk-neonPink text-center font-semibold font-nexus">{error}</div>}
         {result && <TrackingResult result={result} />}
       </div>
-      <div className="mt-8 text-center text-xs text-gray-500 max-w-md">
+      <div className="mt-8 text-center text-xs text-cyberpunk-neonPurple max-w-md">
         <p>Note: This is a demo using the USPS <b>test environment</b>. Use a valid USPS tracking number for best results.</p>
       </div>
     </div>

@@ -2,9 +2,9 @@
 
 export default function Products() {
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Products</h1>
-      <p>Product listing coming soon!</p>
+    <div className="max-w-4xl mx-auto mt-10 p-6 bg-cyberpunk-surface rounded shadow-neon border border-cyberpunk-neonBlue min-h-[60vh]">
+      <h1 className="text-2xl font-nexus font-bold mb-4 text-cyberpunk-neonBlue drop-shadow-[0_0_8px_#00ffe7]">Products</h1>
+      <p className="text-cyberpunk-neonPurple">Product listing coming soon!</p>
     </div>
   );
 } 

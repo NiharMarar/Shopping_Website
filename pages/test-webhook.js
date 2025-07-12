@@ -50,33 +50,29 @@ export default function TestWebhook() {
         <title>Test Webhook - YourShop</title>
       </Head>
 
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-cyberpunk-bg py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white p-8 rounded-lg shadow">
-            <h1 className="text-3xl font-bold mb-6">Test Webhook</h1>
+          <div className="bg-cyberpunk-surface p-8 rounded-lg shadow-neon border border-cyberpunk-neonBlue">
+            <h1 className="text-3xl font-nexus font-bold mb-6 text-cyberpunk-neonBlue drop-shadow-[0_0_8px_#00ffe7]">Test Webhook</h1>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tracking Number
-                </label>
+                <label className="block text-sm font-nexus font-medium text-cyberpunk-neonPink mb-2">Tracking Number</label>
                 <input
                   type="text"
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                   placeholder="Enter tracking number from your database"
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 border border-cyberpunk-neonBlue rounded-md bg-cyberpunk-bg text-cyberpunk-neonBlue placeholder-cyberpunk-neonPurple font-nexus"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tracking Status
-                </label>
+                <label className="block text-sm font-nexus font-medium text-cyberpunk-neonPink mb-2">Tracking Status</label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 border border-cyberpunk-neonBlue rounded-md bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus"
                 >
                   <option value="SHIPPED">Shipped</option>
                   <option value="IN_TRANSIT">In Transit</option>
@@ -87,7 +83,7 @@ export default function TestWebhook() {
 
               <button
                 onClick={testWebhook}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                className="bg-cyberpunk-neonBlue text-cyberpunk-bg px-4 py-2 rounded-md font-nexus font-bold hover:bg-cyberpunk-neonPink hover:text-cyberpunk-bg shadow-neon border border-cyberpunk-neonPink transition-colors"
               >
                 Test Webhook
               </button>

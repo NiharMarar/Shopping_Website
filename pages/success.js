@@ -203,11 +203,11 @@ export default function Success() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-cyberpunk-bg py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Processing your order...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyberpunk-neonBlue mx-auto shadow-neon"></div>
+            <p className="mt-4 text-cyberpunk-neonPurple font-nexus">Processing your order...</p>
           </div>
         </div>
       </div>
@@ -216,12 +216,12 @@ export default function Success() {
   
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-cyberpunk-bg py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center text-red-600">
+          <div className="text-center text-cyberpunk-neonPink font-nexus">
             <h2 className="text-2xl font-bold mb-4">Error</h2>
             <p>{error}</p>
-            <Link href="/" className="mt-4 inline-block text-indigo-600 hover:text-indigo-500">
+            <Link href="/" className="mt-4 inline-block text-cyberpunk-neonBlue hover:text-cyberpunk-neonPink font-nexus transition-colors">
               Return to Home
             </Link>
           </div>
@@ -236,17 +236,17 @@ export default function Success() {
         <title>Order Confirmation - YourShop</title>
       </Head>
 
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-cyberpunk-bg py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Success Header */}
-          <div className="bg-white p-8 rounded-lg shadow text-center mb-8">
-            <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-cyberpunk-surface p-8 rounded-lg shadow-neon text-center mb-8 border border-cyberpunk-neonBlue">
+            <div className="mx-auto h-16 w-16 bg-cyberpunk-neonBlue rounded-full flex items-center justify-center mb-4">
+              <svg className="h-8 w-8 text-cyberpunk-bg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Thank you for your purchase!</h1>
-            <p className="text-gray-600">Your order has been placed successfully and payment has been processed.</p>
+            <h1 className="text-3xl font-nexus font-bold text-cyberpunk-neonBlue mb-2 drop-shadow-[0_0_8px_#00ffe7]">Thank you for your purchase!</h1>
+            <p className="text-cyberpunk-neonPurple">Your order has been placed successfully and payment has been processed.</p>
           </div>
 
           {/* Important Notice */}
