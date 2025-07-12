@@ -62,13 +62,42 @@ export default async function handler(req, res) {
           emailType = 'shipped';
       }
 
-      // Update the order in Supabase
-      const { data: orderData, error: updateError } = await supabase
+      // Get current order data first
+      const { data: currentOrder, error: fetchError } = await supabase
         .from('orders')
-        .update({ 
-          order_status: orderStatus,
-          updated_at: new Date().toISOString()
-        })
+        .select('*')
+        .eq('tracking_number', trackingNumber)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ Error fetching order:', fetchError);
+        return res.status(500).json({ error: 'Failed to fetch order' });
+      }
+
+      if (!currentOrder) {
+        console.error('❌ No order found with tracking number:', trackingNumber);
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      // Update the order in Supabase
+      const updateData = { 
+        order_status: orderStatus,
+        updated_at: new Date().toISOString()
+      };
+
+      // Set shipped_at timestamp when status changes to shipped
+      if (orderStatus === 'shipped' && currentOrder.order_status !== 'shipped') {
+        updateData.shipped_at = new Date().toISOString();
+      }
+
+      // Set delivered_at timestamp when status changes to delivered
+      if (orderStatus === 'delivered' && currentOrder.order_status !== 'delivered') {
+        updateData.delivered_at = new Date().toISOString();
+      }
+
+      const { data: updatedOrder, error: updateError } = await supabase
+        .from('orders')
+        .update(updateData)
         .eq('tracking_number', trackingNumber)
         .select('*')
         .single();
@@ -78,21 +107,18 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to update order status' });
       }
 
-      if (!orderData) {
-        console.error('❌ No order found with tracking number:', trackingNumber);
-        return res.status(404).json({ error: 'Order not found' });
-      }
-
       console.log('✅ Order status updated:', {
-        order_id: orderData.id,
+        order_id: updatedOrder.id,
         tracking_number: trackingNumber,
-        old_status: orderData.order_status,
-        new_status: orderStatus
+        old_status: currentOrder.order_status,
+        new_status: orderStatus,
+        shipped_at: updateData.shipped_at,
+        delivered_at: updateData.delivered_at
       });
 
       // Send appropriate email notification
       try {
-        await sendTrackingEmail(orderData, emailType, trackingStatus);
+        await sendTrackingEmail(updatedOrder, emailType, trackingStatus);
         console.log('✅ Tracking email sent:', emailType);
       } catch (emailError) {
         console.error('❌ Error sending tracking email:', emailError);
@@ -101,7 +127,7 @@ export default async function handler(req, res) {
 
       // Log the event for analytics/debugging
       console.log('📊 Webhook processed successfully:', {
-        order_id: orderData.id,
+        order_id: updatedOrder.id,
         tracking_number: trackingNumber,
         status: orderStatus,
         email_sent: emailType,
@@ -110,7 +136,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ 
         success: true,
-        order_id: orderData.id,
+        order_id: updatedOrder.id,
         status: orderStatus
       });
 

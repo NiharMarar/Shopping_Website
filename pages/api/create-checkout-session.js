@@ -7,13 +7,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { cartItems, successUrl, cancelUrl, email, shippingAddress, billingAddress } = req.body;
+    const { cartItems, successUrl, cancelUrl, email, shippingAddress, billingAddress, selectedShippingRate, taxRate } = req.body;
     
     console.log('🔍 /api/create-checkout-session received:', {
       cartItemsLength: cartItems?.length,
       email,
       hasShippingAddress: !!shippingAddress,
-      hasBillingAddress: !!billingAddress
+      hasBillingAddress: !!billingAddress,
+      hasShippingRate: !!selectedShippingRate,
+      taxRate
     });
 
     // Debug: Log the first cart item structure
@@ -32,7 +34,25 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No items in cart' });
     }
 
-    // Create line items for Stripe
+    // Calculate totals
+    const subtotal = cartItems.reduce((total, item) => {
+      const price = item.products?.product_price || item.product?.product_price || 0;
+      const quantity = item.quantity || 1;
+      return total + (price * quantity);
+    }, 0);
+
+    const shippingCost = selectedShippingRate ? parseFloat(selectedShippingRate.rate) : 0;
+    const taxAmount = (subtotal + shippingCost) * (taxRate || 0.08);
+    const total = subtotal + shippingCost + taxAmount;
+
+    console.log('💰 Price breakdown:', {
+      subtotal: subtotal.toFixed(2),
+      shippingCost: shippingCost.toFixed(2),
+      taxAmount: taxAmount.toFixed(2),
+      total: total.toFixed(2)
+    });
+
+    // Create line items for Stripe (products only)
     const lineItems = cartItems.map(item => {
       const price = item.products?.product_price || item.product?.product_price;
       console.log('💰 Processing item price:', { price, itemId: item.cart_item_id });
@@ -50,6 +70,36 @@ export default async function handler(req, res) {
         quantity: item.quantity,
       };
     });
+
+    // Add shipping as a separate line item
+    if (shippingCost > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Shipping - ${selectedShippingRate.servicelevel.name}`,
+            description: `Estimated delivery: ${selectedShippingRate.estimated_days} days`,
+          },
+          unit_amount: Math.round(shippingCost * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    // Add tax as a separate line item
+    if (taxAmount > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Tax (${((taxRate || 0.08) * 100).toFixed(1)}%)`,
+            description: 'Sales tax',
+          },
+          unit_amount: Math.round(taxAmount * 100),
+        },
+        quantity: 1,
+      });
+    }
 
     console.log('💰 Created line items:', lineItems);
 
@@ -88,7 +138,12 @@ export default async function handler(req, res) {
         sessionToken: sessionToken,
         // Add billing address to metadata for your own reference (not used by Stripe)
         billingName: billingAddress?.name || '',
-        billingCity: billingAddress?.city || ''
+        billingCity: billingAddress?.city || '',
+        // Add shipping and tax info
+        shippingCost: shippingCost.toString(),
+        taxAmount: taxAmount.toString(),
+        taxRate: (taxRate || 0.08).toString(),
+        selectedShippingRate: selectedShippingRate ? JSON.stringify(selectedShippingRate) : ''
       }
     });
 
@@ -102,6 +157,11 @@ export default async function handler(req, res) {
           shipping_address: shippingAddress,
           billing_address: billingAddress,
           email: email,
+          selected_shipping_rate: selectedShippingRate,
+          tax_rate: taxRate || 0.08,
+          shipping_cost: shippingCost,
+          tax_amount: taxAmount,
+          total_amount: total,
           created_at: new Date().toISOString(),
           expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour expiry
         }

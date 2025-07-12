@@ -34,6 +34,12 @@ export default function Checkout() {
     country: 'US'
   });
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
+  
+  // New shipping state
+  const [shippingRates, setShippingRates] = useState([]);
+  const [selectedShippingRate, setSelectedShippingRate] = useState(null);
+  const [calculatingShipping, setCalculatingShipping] = useState(false);
+  const [taxRate, setTaxRate] = useState(0.08); // Default 8% tax rate
 
   // Diagnostic log
   console.log('Checkout render: user =', user, 'loading =', loading);
@@ -75,6 +81,13 @@ export default function Checkout() {
       setBillingAddress({ ...shippingAddress });
     }
   }, [billingSameAsShipping, shippingAddress]);
+
+  // Calculate shipping rates when address changes
+  useEffect(() => {
+    if (shippingAddress.line1 && shippingAddress.city && shippingAddress.state && shippingAddress.postal_code && cartItems.length > 0) {
+      calculateShippingRates();
+    }
+  }, [shippingAddress, cartItems]);
 
   const fetchCartItems = async () => {
     try {
@@ -118,13 +131,90 @@ export default function Checkout() {
     }
   };
 
-  const calculateTotal = () => {
+  const calculateShippingRates = async () => {
+    if (!shippingAddress.line1 || !shippingAddress.city || !shippingAddress.state || !shippingAddress.postal_code) {
+      console.log('❌ Missing address fields for shipping calculation');
+      return;
+    }
+
+    if (!cartItems || cartItems.length === 0) {
+      console.log('❌ No cart items for shipping calculation');
+      return;
+    }
+
+    setCalculatingShipping(true);
+    try {
+      console.log('🚢 Calculating shipping rates for:', {
+        address: shippingAddress,
+        cartItemsCount: cartItems.length
+      });
+
+      const response = await fetch('/api/domestic-pricing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: {
+            name: shippingAddress.name,
+            street1: shippingAddress.line1,
+            street2: shippingAddress.line2,
+            city: shippingAddress.city,
+            state: shippingAddress.state,
+            zip: shippingAddress.postal_code,
+            country: shippingAddress.country,
+          },
+          cartItems
+        })
+      });
+
+      const data = await response.json();
+      console.log('🚢 Shipping rates response:', data);
+
+      if (data.success && data.rates && data.rates.length > 0) {
+        setShippingRates(data.rates);
+        // Auto-select the cheapest rate
+        const cheapestRate = data.rates.reduce((min, rate) => 
+          parseFloat(rate.rate) < parseFloat(min.rate) ? rate : min
+        );
+        setSelectedShippingRate(cheapestRate);
+        console.log('✅ Shipping rates calculated, selected:', cheapestRate);
+      } else {
+        console.error('❌ Failed to get shipping rates:', data.error || 'No rates returned');
+        setShippingRates([]);
+        setSelectedShippingRate(null);
+      }
+    } catch (error) {
+      console.error('❌ Error calculating shipping rates:', error);
+      setShippingRates([]);
+      setSelectedShippingRate(null);
+    } finally {
+      setCalculatingShipping(false);
+    }
+  };
+
+  const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
       // Handle both logged-in user and guest cart item structures
       const price = item.products?.product_price || item.product?.product_price || item.price || 0;
       const quantity = item.quantity || 1;
       return total + (price * quantity);
     }, 0);
+  };
+
+  const calculateShipping = () => {
+    return selectedShippingRate ? parseFloat(selectedShippingRate.rate) : 0;
+  };
+
+  const calculateTax = () => {
+    const subtotal = calculateSubtotal();
+    const shipping = calculateShipping();
+    return (subtotal + shipping) * taxRate;
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const shipping = calculateShipping();
+    const tax = calculateTax();
+    return subtotal + shipping + tax;
   };
 
   // Address validation helper
@@ -157,6 +247,13 @@ export default function Checkout() {
     const emailError = validateEmail(email);
     if (shippingError || billingError || emailError) {
       setError(shippingError || billingError || emailError);
+      setLoading(false);
+      return;
+    }
+
+    // Validate shipping rate is selected
+    if (!selectedShippingRate) {
+      setError('Please select a shipping option.');
       setLoading(false);
       return;
     }
@@ -205,11 +302,13 @@ export default function Checkout() {
         cartItems,
         shippingAddress,
         billingAddress,
-        email
+        email,
+        selectedShippingRate,
+        taxRate
       };
       localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
       
-      // Create Stripe checkout session
+      // Create Stripe checkout session with shipping and tax
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -220,6 +319,8 @@ export default function Checkout() {
           shippingAddress,
           billingAddress,
           email,
+          selectedShippingRate,
+          taxRate,
           successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
         }),
@@ -390,6 +491,38 @@ export default function Checkout() {
                   </div>
                 </div>
 
+                {/* Shipping Options */}
+                {shippingRates.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-3">Shipping Options</h3>
+                    <div className="space-y-2">
+                      {shippingRates.map((rate, index) => (
+                        <label key={index} className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value={index}
+                            checked={selectedShippingRate === rate}
+                            onChange={() => setSelectedShippingRate(rate)}
+                            className="mr-3"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium">{rate.servicelevel.name}</div>
+                            <div className="text-sm text-gray-500">{rate.estimated_days} days</div>
+                          </div>
+                          <div className="font-medium">${parseFloat(rate.rate).toFixed(2)}</div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {calculatingShipping && (
+                  <div className="mt-4 text-center text-gray-600">
+                    Calculating shipping rates...
+                  </div>
+                )}
+
                 {/* Billing Address Section */}
                 <div className="mt-8">
                   <label className="flex items-center mb-2">
@@ -399,172 +532,188 @@ export default function Checkout() {
                       onChange={e => setBillingSameAsShipping(e.target.checked)}
                       className="mr-2"
                     />
-                    Billing address is the same as shipping address
+                    Billing address same as shipping address
                   </label>
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="billing_name" className="block text-sm font-medium text-gray-700">
-                        Full Name
-                      </label>
-                      <input
-                        type="text"
-                        id="billing_name"
-                        required
-                        disabled={billingSameAsShipping}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        value={billingAddress.name}
-                        onChange={e => setBillingAddress({ ...billingAddress, name: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="billing_line1" className="block text-sm font-medium text-gray-700">
-                        Address Line 1
-                      </label>
-                      <input
-                        type="text"
-                        id="billing_line1"
-                        required
-                        disabled={billingSameAsShipping}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        value={billingAddress.line1}
-                        onChange={e => setBillingAddress({ ...billingAddress, line1: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="billing_line2" className="block text-sm font-medium text-gray-700">
-                        Address Line 2
-                      </label>
-                      <input
-                        type="text"
-                        id="billing_line2"
-                        disabled={billingSameAsShipping}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        value={billingAddress.line2}
-                        onChange={e => setBillingAddress({ ...billingAddress, line2: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+
+                  {!billingSameAsShipping && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium text-gray-900">Billing Address</h3>
+                      {/* Billing address fields - same structure as shipping */}
                       <div>
-                        <label htmlFor="billing_city" className="block text-sm font-medium text-gray-700">
-                          City
+                        <label htmlFor="billing_name" className="block text-sm font-medium text-gray-700">
+                          Full Name
                         </label>
                         <input
                           type="text"
-                          id="billing_city"
+                          id="billing_name"
                           required
-                          disabled={billingSameAsShipping}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          value={billingAddress.city}
-                          onChange={e => setBillingAddress({ ...billingAddress, city: e.target.value })}
+                          value={billingAddress.name}
+                          onChange={(e) => setBillingAddress({ ...billingAddress, name: e.target.value })}
                         />
                       </div>
+
                       <div>
-                        <label htmlFor="billing_state" className="block text-sm font-medium text-gray-700">
-                          State
+                        <label htmlFor="billing_line1" className="block text-sm font-medium text-gray-700">
+                          Address Line 1
                         </label>
                         <input
                           type="text"
-                          id="billing_state"
+                          id="billing_line1"
                           required
-                          disabled={billingSameAsShipping}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          value={billingAddress.state}
-                          onChange={e => setBillingAddress({ ...billingAddress, state: e.target.value })}
+                          value={billingAddress.line1}
+                          onChange={(e) => setBillingAddress({ ...billingAddress, line1: e.target.value })}
                         />
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+
                       <div>
-                        <label htmlFor="billing_postal_code" className="block text-sm font-medium text-gray-700">
-                          Postal Code
+                        <label htmlFor="billing_line2" className="block text-sm font-medium text-gray-700">
+                          Address Line 2
                         </label>
                         <input
                           type="text"
-                          id="billing_postal_code"
-                          required
-                          disabled={billingSameAsShipping}
+                          id="billing_line2"
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          value={billingAddress.postal_code}
-                          onChange={e => setBillingAddress({ ...billingAddress, postal_code: e.target.value })}
+                          value={billingAddress.line2}
+                          onChange={(e) => setBillingAddress({ ...billingAddress, line2: e.target.value })}
                         />
                       </div>
-                      <div>
-                        <label htmlFor="billing_country" className="block text-sm font-medium text-gray-700">
-                          Country
-                        </label>
-                        <select
-                          id="billing_country"
-                          required
-                          disabled={billingSameAsShipping}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          value={billingAddress.country}
-                          onChange={e => setBillingAddress({ ...billingAddress, country: e.target.value })}
-                        >
-                          <option value="US">United States</option>
-                          <option value="CA">Canada</option>
-                          <option value="GB">United Kingdom</option>
-                        </select>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="billing_city" className="block text-sm font-medium text-gray-700">
+                            City
+                          </label>
+                          <input
+                            type="text"
+                            id="billing_city"
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            value={billingAddress.city}
+                            onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="billing_state" className="block text-sm font-medium text-gray-700">
+                            State
+                          </label>
+                          <input
+                            type="text"
+                            id="billing_state"
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            value={billingAddress.state}
+                            onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="billing_postal_code" className="block text-sm font-medium text-gray-700">
+                            Postal Code
+                          </label>
+                          <input
+                            type="text"
+                            id="billing_postal_code"
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            value={billingAddress.postal_code}
+                            onChange={(e) => setBillingAddress({ ...billingAddress, postal_code: e.target.value })}
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="billing_country" className="block text-sm font-medium text-gray-700">
+                            Country
+                          </label>
+                          <select
+                            id="billing_country"
+                            required
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            value={billingAddress.country}
+                            onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
+                          >
+                            <option value="US">United States</option>
+                            <option value="CA">Canada</option>
+                            <option value="GB">United Kingdom</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading || !selectedShippingRate}
+                    className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'Processing...' : 'Proceed to Payment'}
+                  </button>
                 </div>
-
-                {error && (
-                  <div className="mt-4 text-red-600">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : 'Proceed to Payment'}
-                </button>
               </form>
             </div>
 
             {/* Order Summary */}
             <div className="bg-white p-6 rounded-lg shadow">
               <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
-              <div className="space-y-4">
+              
+              {/* Cart Items */}
+              <div className="space-y-4 mb-6">
                 {cartItems.map((item, index) => {
-                  // Handle both logged-in user and guest cart item structures
-                  const productName = item.products?.product_name || item.product?.product_name || item.name || 'Unknown Product';
-                  const productPrice = item.products?.product_price || item.product?.product_price || item.price || 0;
-                  const productImage = item.products?.image_url || item.product?.image_url || item.image || '';
+                  const price = item.products?.product_price || item.product?.product_price || item.price || 0;
                   const quantity = item.quantity || 1;
-                  const itemTotal = productPrice * quantity;
-                  
-                  // Create a unique key
-                  const uniqueKey = item.cart_item_id || item.id || `item-${index}-${productName}`;
+                  const total = price * quantity;
                   
                   return (
-                    <div key={uniqueKey} className="flex items-center space-x-4">
+                    <div key={index} className="flex items-center space-x-4">
                       <img
-                        src={productImage}
-                        alt={productName}
+                        src={item.products?.image_url || item.product?.image_url || '/placeholder.png'}
+                        alt={item.products?.product_name || item.product?.product_name || 'Product'}
                         className="w-16 h-16 object-cover rounded"
                       />
                       <div className="flex-1">
-                        <h3 className="text-sm font-medium">{productName}</h3>
-                        <p className="text-sm text-gray-500">Quantity: {quantity}</p>
+                        <h3 className="font-medium">{item.products?.product_name || item.product?.product_name || 'Product'}</h3>
+                        <p className="text-sm text-gray-500">Qty: {quantity}</p>
                       </div>
-                      <p className="text-sm font-medium">
-                        ${itemTotal.toFixed(2)}
-                      </p>
+                      <p className="font-medium">${total.toFixed(2)}</p>
                     </div>
                   );
                 })}
+              </div>
 
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-lg font-medium">
-                    <span>Total</span>
-                    <span>${calculateTotal().toFixed(2)}</span>
+              {/* Price Breakdown */}
+              <div className="border-t pt-4 space-y-2">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>${calculateSubtotal().toFixed(2)}</span>
+                </div>
+                
+                {selectedShippingRate && (
+                  <div className="flex justify-between">
+                    <span>Shipping ({selectedShippingRate.servicelevel.name}):</span>
+                    <span>${calculateShipping().toFixed(2)}</span>
                   </div>
+                )}
+                
+                <div className="flex justify-between">
+                  <span>Tax ({(taxRate * 100).toFixed(1)}%):</span>
+                  <span>${calculateTax().toFixed(2)}</span>
+                </div>
+                
+                <div className="border-t pt-2 flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span>${calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
+
+              {error && (
+                <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {error}
+                </div>
+              )}
             </div>
           </div>
         </div>
