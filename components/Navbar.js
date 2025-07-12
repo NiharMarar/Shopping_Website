@@ -29,8 +29,10 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           {/* Logo and main navigation */}
           <div className="flex">
-            <Link href="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-indigo-600">Shop</span>
+            <Link href="/" className="flex-shrink-0 flex items-center group">
+              <span className="text-3xl font-extrabold font-nexus tracking-widest text-cyberpunk-neonBlue drop-shadow-[0_0_8px_#00ffe7] group-hover:text-cyberpunk-neonPink transition-colors duration-300" style={{letterSpacing: '0.2em', textShadow: '0 0 8px #00ffe7, 0 0 16px #ff00cb'}}>
+                NEXUS
+              </span>
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <Link href="/products" className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-indigo-500">

@@ -6,7 +6,7 @@ export default function ProductCard({ product }) {
 
   return (
     <div 
-      className="group relative bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl"
+      className="group relative bg-cyberpunk-surface rounded-xl shadow-neon overflow-hidden transition-all duration-300 hover:shadow-xl border border-cyberpunk-neonBlue"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -19,14 +19,12 @@ export default function ProductCard({ product }) {
           />
         </div>
         <div className="p-4">
-          <h3 className="text-lg font-medium text-gray-900">{product.product_name}</h3>
-          <p className="mt-1 text-sm text-gray-500">{product.product_description}</p>
+          <h3 className="text-lg font-nexus font-bold text-cyberpunk-neonBlue drop-shadow-[0_0_8px_#00ffe7]">{product.product_name}</h3>
+          <p className="mt-1 text-sm text-cyberpunk-neonPurple">{product.product_description}</p>
           <div className="mt-2 flex items-center justify-between">
-            <p className="text-lg font-bold text-indigo-600">${product.product_price}</p>
+            <p className="text-lg font-extrabold text-cyberpunk-neonPink drop-shadow-[0_0_8px_#ff00cb]">${product.product_price}</p>
             <button 
-              className={`px-4 py-2 rounded-md text-white font-medium transition-colors duration-300 ${
-                isHovered ? 'bg-indigo-700' : 'bg-indigo-600'
-              }`}
+              className={`px-4 py-2 rounded-md font-nexus font-bold transition-colors duration-300 shadow-neon border border-cyberpunk-neonPink focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonBlue focus:ring-offset-2 ${isHovered ? 'bg-cyberpunk-neonPink text-cyberpunk-bg' : 'bg-cyberpunk-neonBlue text-cyberpunk-bg hover:bg-cyberpunk-neonPink hover:text-cyberpunk-bg'}`}
             >
               Add to Cart
             </button>

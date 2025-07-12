@@ -32,7 +32,7 @@ export default function CheckoutButton() {
     <button
       onClick={handleCheckout}
       disabled={loading || cartItems.length === 0}
-      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200"
+      className={`w-full font-nexus font-bold py-3 px-6 rounded-lg transition-colors duration-200 shadow-neon border border-cyberpunk-neonPink focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonBlue focus:ring-offset-2 ${loading || cartItems.length === 0 ? 'bg-cyberpunk-surface text-cyberpunk-neonPurple cursor-not-allowed' : 'bg-cyberpunk-neonBlue text-cyberpunk-bg hover:bg-cyberpunk-neonPink hover:text-cyberpunk-bg'}`}
     >
       {loading ? 'Processing...' : `Checkout ($${cartItems.reduce((total, item) => total + (item.product.product_price * item.quantity), 0).toFixed(2)})`}
     </button>
