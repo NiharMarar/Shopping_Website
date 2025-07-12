@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { cartItems, shippingAddress, billingAddress, email, user_id, session_id } = req.body;
+  const { cartItems, shippingAddress, billingAddress, email, user_id, session_id, totalAmount, shippingCost, taxAmount } = req.body;
   if (!cartItems || cartItems.length === 0) {
     console.log('❌ API: Cart is empty');
     return res.status(400).json({ error: 'Cart is empty' });
@@ -63,13 +63,19 @@ export default async function handler(req, res) {
 
     // Generate order number
     const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    // Calculate total
-    const totalAmount = cartItems.reduce((total, item) => {
+    
+    // Use provided total amount or calculate from cart items if not provided
+    const finalTotalAmount = totalAmount || cartItems.reduce((total, item) => {
       const price = item.products?.product_price || item.product?.product_price || item.price || 0;
       return total + (price * (item.quantity || 1));
     }, 0);
 
-    console.log('💰 API: Total amount:', totalAmount);
+    console.log('💰 API: Total amount breakdown:', {
+      providedTotal: totalAmount,
+      shippingCost,
+      taxAmount,
+      finalTotal: finalTotalAmount
+    });
 
     // Insert order
     console.log('📝 API: Creating order in database...');
@@ -79,7 +85,7 @@ export default async function handler(req, res) {
         {
           user_id: user_id || null,
           order_number: orderNumber,
-          total_amount: totalAmount,
+          total_amount: finalTotalAmount,
           shipping_address: shippingAddress,
           billing_address: billingAddress,
           order_status: 'pending',
@@ -140,7 +146,7 @@ export default async function handler(req, res) {
             order_number: order.order_number,
             created_at: order.created_at,
             order_items: order_items_full || [],
-            total_amount: totalAmount,
+            total_amount: finalTotalAmount,
             shipping_address: order.shipping_address,
             billing_address: order.billing_address
           }

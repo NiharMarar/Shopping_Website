@@ -87,6 +87,24 @@ export default function Success() {
           return;
         }
 
+        // Calculate total amount including shipping and tax
+        const subtotal = checkoutData.cartItems.reduce((total, item) => {
+          const price = item.products?.product_price || item.product?.product_price || item.price || 0;
+          return total + (price * (item.quantity || 1));
+        }, 0);
+        
+        const shippingCost = checkoutData.selectedShippingRate ? parseFloat(checkoutData.selectedShippingRate.rate) : 0;
+        const taxAmount = (subtotal + shippingCost) * (checkoutData.taxRate || 0);
+        const totalAmount = subtotal + shippingCost + taxAmount;
+        
+        console.log('💰 Order total calculation:', {
+          subtotal,
+          shippingCost,
+          taxAmount,
+          totalAmount,
+          taxRate: checkoutData.taxRate
+        });
+
         // Call /api/create-order with server-side data
         const orderRes = await fetch('/api/create-order', {
           method: 'POST',
@@ -97,7 +115,10 @@ export default function Success() {
             billingAddress: checkoutData.billingAddress,
             email: checkoutData.email,
             user_id: user ? user.id : null,
-            session_id
+            session_id,
+            totalAmount,
+            shippingCost,
+            taxAmount
           })
         });
         
