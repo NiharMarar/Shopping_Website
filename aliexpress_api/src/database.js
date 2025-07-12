@@ -195,6 +195,45 @@ class Database {
     `);
   }
 
+  async getStoreProduct(id) {
+    return this.get(`
+      SELECT sp.*, ap.title as aliexpress_title, ap.images as aliexpress_images
+      FROM store_products sp
+      JOIN aliexpress_products ap ON sp.aliexpress_product_id = ap.id
+      WHERE sp.id = ?
+    `, [id]);
+  }
+
+  async updateStoreProduct(id, updates) {
+    const fields = [];
+    const values = [];
+    
+    Object.keys(updates).forEach(key => {
+      fields.push(`${key} = ?`);
+      values.push(updates[key]);
+    });
+    
+    values.push(id);
+    
+    await this.run(`
+      UPDATE store_products 
+      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, values);
+    
+    return this.getStoreProduct(id);
+  }
+
+  async deleteStoreProduct(id) {
+    await this.run(`
+      UPDATE store_products 
+      SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [id]);
+    
+    return { success: true };
+  }
+
   // Order operations
   async createAliExpressOrder(orderData) {
     const sql = `

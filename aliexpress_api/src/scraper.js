@@ -9,7 +9,6 @@ class AliExpressScraper {
 
   async init() {
     console.log('🚀 Initializing AliExpress scraper...');
-    
     this.browser = await puppeteer.launch({
       headless: false, // Set to true in production
       args: [
@@ -22,96 +21,172 @@ class AliExpressScraper {
         '--disable-gpu'
       ]
     });
-
     this.page = await this.browser.newPage();
-    
-    // Set user agent to avoid detection
     await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-    
-    // Set viewport
     await this.page.setViewport({ width: 1920, height: 1080 });
-    
     console.log('✅ Scraper initialized');
   }
 
   async scrapeProduct(productUrl) {
     try {
       console.log(`🔍 Scraping product: ${productUrl}`);
-      
-      await this.page.goto(productUrl, { 
-        waitUntil: 'networkidle2',
-        timeout: 30000 
-      });
+      await this.page.goto(productUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      await this.delay(2000);
+      await this.page.screenshot({ path: 'debug-screenshot.png' });
+      console.log('📸 Screenshot saved as debug-screenshot.png');
 
-      // Wait for product page to load
-      await this.page.waitForSelector('.product-title', { timeout: 10000 });
+      // Wait for any product content to load
+      const titleSelectors = [
+        '[data-pl="product-title"]',
+        'h1',
+        '.product-title',
+        '.product-name',
+        '[class*="title"]'
+      ];
+      
+      let foundSelector = false;
+      for (const selector of titleSelectors) {
+        try {
+          await this.page.waitForSelector(selector, { timeout: 5000 });
+          console.log(`✅ Found product title selector: ${selector}`);
+          foundSelector = true;
+          break;
+        } catch (error) {
+          console.log(`⚠️ Selector ${selector} not found, trying next...`);
+        }
+      }
+      
+      if (!foundSelector) {
+        console.log('⚠️ Could not find any product title selector, continuing anyway...');
+      }
 
       const productData = await this.page.evaluate(() => {
         // Extract product ID from URL
         const urlParts = window.location.href.split('/');
         const aliexpressId = urlParts[urlParts.length - 1].split('.')[0];
 
-        // Extract title
-        const titleElement = document.querySelector('.product-title');
-        const title = titleElement ? titleElement.textContent.trim() : '';
+        // Title - Multiple selectors for different AliExpress layouts
+        let title = '';
+        const titleSelectors = [
+          '[data-pl="product-title"]',
+          'h1',
+          '.product-title',
+          '.product-name',
+          '[class*="title"]',
+          '[class*="name"]'
+        ];
+        
+        for (const selector of titleSelectors) {
+          const element = document.querySelector(selector);
+          if (element && element.textContent.trim()) {
+            title = element.textContent.trim();
+            break;
+          }
+        }
 
-        // Extract price
-        const priceElement = document.querySelector('.product-price-current');
-        const priceText = priceElement ? priceElement.textContent.trim() : '';
-        const price = parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+        // Price - Multiple selectors for different price formats
+        let price = 0;
+        const priceSelectors = [
+          '.price--currentPriceText--V8_y_b5',
+          '[class*="price"]',
+          '.price',
+          '.current-price',
+          '.product-price',
+          '[data-pl="price"]'
+        ];
+        
+        for (const selector of priceSelectors) {
+          const element = document.querySelector(selector);
+          if (element) {
+            const priceText = element.textContent.trim();
+            const extractedPrice = parseFloat(priceText.replace(/[^\d.]/g, ''));
+            if (extractedPrice > 0) {
+              price = extractedPrice;
+              break;
+            }
+          }
+        }
 
-        // Extract original price
-        const originalPriceElement = document.querySelector('.product-price-original');
-        const originalPriceText = originalPriceElement ? originalPriceElement.textContent.trim() : '';
-        const originalPrice = parseFloat(originalPriceText.replace(/[^\d.]/g, '')) || price;
+        // Images - Multiple selectors for different image layouts
+        let images = [];
+        const imageSelectors = [
+          '.magnifier--image--RM17RL2',
+          '.product-image img',
+          '.main-image img',
+          '[class*="image"] img',
+          '.gallery img',
+          'img[src*="alicdn"]',
+          'img[src*="ae01"]'
+        ];
+        
+        for (const selector of imageSelectors) {
+          const imageElements = document.querySelectorAll(selector);
+          for (const img of imageElements) {
+            if (img.src && img.src.includes('alicdn') || img.src.includes('ae01')) {
+              images.push(img.src);
+            }
+          }
+          if (images.length > 0) break;
+        }
 
-        // Extract images
-        const imageElements = document.querySelectorAll('.product-image img');
-        const images = Array.from(imageElements).map(img => img.src).filter(src => src);
+        // Description - Multiple approaches
+        let description = '';
+        
+        // Try description section
+        const descSelectors = [
+          '#nav-description',
+          '.product-description',
+          '[class*="description"]',
+          '.detail-content'
+        ];
+        
+        for (const selector of descSelectors) {
+          const element = document.querySelector(selector);
+          if (element) {
+            const descText = element.innerText || element.textContent;
+            if (descText && descText.trim().length > 10) {
+              description = descText.trim();
+              break;
+            }
+          }
+        }
 
-        // Extract seller info
-        const sellerElement = document.querySelector('.seller-name');
-        const sellerName = sellerElement ? sellerElement.textContent.trim() : '';
+        // Fallback: try meta description
+        if (!description || description.length < 10) {
+          const metaDesc = document.querySelector('meta[name="description"]');
+          if (metaDesc && metaDesc.content) {
+            description = metaDesc.content;
+          }
+        }
 
-        // Extract rating
-        const ratingElement = document.querySelector('.seller-rating');
-        const rating = ratingElement ? parseFloat(ratingElement.textContent) : 0;
-
-        // Extract stock quantity
-        const stockElement = document.querySelector('.stock-quantity');
-        const stockQuantity = stockElement ? parseInt(stockElement.textContent) : 999;
-
-        // Extract description
-        const descriptionElement = document.querySelector('.product-description');
-        const description = descriptionElement ? descriptionElement.textContent.trim() : '';
-
-        // Extract category
-        const categoryElement = document.querySelector('.breadcrumb-item:last-child');
-        const category = categoryElement ? categoryElement.textContent.trim() : '';
+        // Fallback: try to get any text content from the page
+        if (!description || description.length < 10) {
+          const bodyText = document.body.innerText || document.body.textContent;
+          const sentences = bodyText.split(/[.!?]/).slice(0, 3).join('. ');
+          if (sentences.length > 20) {
+            description = sentences;
+          }
+        }
 
         return {
           aliexpress_id: aliexpressId,
           title,
           description,
           price,
-          original_price: originalPrice,
+          original_price: price,
           images,
-          seller_name: sellerName,
-          seller_rating: rating,
-          stock_quantity: stockQuantity,
-          category,
+          seller_name: '',
+          seller_rating: 0,
+          stock_quantity: 999,
+          category: '',
           currency: 'USD'
         };
       });
 
       console.log('📦 Scraped product data:', productData);
-
-      // Save to database
       await database.addAliExpressProduct(productData);
       console.log('✅ Product saved to database');
-
       return productData;
-
     } catch (error) {
       console.error('❌ Error scraping product:', error);
       throw error;
@@ -182,15 +257,11 @@ class AliExpressScraper {
   }
 }
 
-// CLI usage
 if (require.main === module) {
   (async () => {
     const scraper = new AliExpressScraper();
-    
     try {
       await scraper.init();
-      
-      // Example: Scrape a single product
       const productUrl = process.argv[2];
       if (productUrl) {
         const product = await scraper.scrapeProduct(productUrl);
@@ -198,7 +269,6 @@ if (require.main === module) {
       } else {
         console.log('Usage: node scraper.js <product_url>');
       }
-      
     } catch (error) {
       console.error('❌ Scraper error:', error);
     } finally {
@@ -207,4 +277,16 @@ if (require.main === module) {
   })();
 }
 
-module.exports = AliExpressScraper; 
+// Export a simple function for the API
+async function scrapeProduct(url) {
+  const scraper = new AliExpressScraper();
+  try {
+    await scraper.init();
+    const productData = await scraper.scrapeProduct(url);
+    return productData;
+  } finally {
+    await scraper.close();
+  }
+}
+
+module.exports = { AliExpressScraper, scrapeProduct }; 
