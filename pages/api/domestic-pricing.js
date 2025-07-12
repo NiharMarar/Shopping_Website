@@ -1,7 +1,3 @@
-import Shippo from 'shippo';
-
-const shippo = Shippo(process.env.SHIPPO_API_KEY);
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -83,27 +79,71 @@ export default async function handler(req, res) {
 
     console.log('🚢 Calculating rates for shipment:', shipment);
 
-    // Get rates from Shippo
-    const rates = await shippo.shipment.create({
+    // Get rates from Shippo using fetch instead of the shippo package
+    console.log('🔑 Using API key:', process.env.SHIPPO_API_KEY ? 'Present' : 'Missing');
+    
+    const requestBody = {
       address_from: shipment.address_from,
       address_to: shipment.address_to,
       parcels: shipment.parcels,
       async: false
+    };
+    
+    console.log('📤 Request body:', JSON.stringify(requestBody, null, 2));
+
+    const ratesResponse = await fetch('https://api.goshippo.com/shipments/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
     });
 
-    if (rates.messages && rates.messages.length > 0) {
-      console.error('❌ Shippo rate calculation errors:', rates.messages);
+    console.log('📥 Response status:', ratesResponse.status);
+    console.log('📥 Response headers:', Object.fromEntries(ratesResponse.headers.entries()));
+
+    const responseText = await ratesResponse.text();
+    console.log('📥 Raw response:', responseText);
+
+    let rates;
+    try {
+      rates = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('❌ Failed to parse JSON response:', parseError);
+      return res.status(500).json({ 
+        error: 'Invalid JSON response from Shippo',
+        details: responseText.substring(0, 500)
+      });
+    }
+
+    if (!ratesResponse.ok) {
+      console.error('❌ Shippo rate calculation failed:', rates);
       return res.status(400).json({ 
         error: 'Failed to calculate shipping rates',
-        details: rates.messages
+        details: rates
       });
+    }
+
+    // Check if we have any rates (this is what matters)
+    if (!rates.rates || rates.rates.length === 0) {
+      console.error('❌ No rates returned from Shippo:', rates);
+      return res.status(400).json({ 
+        error: 'No shipping rates available',
+        details: rates
+      });
+    }
+
+    // Log messages but don't treat them as errors (they're just informational)
+    if (rates.messages && rates.messages.length > 0) {
+      console.log('ℹ️ Shippo messages (informational):', rates.messages);
     }
 
     // Filter and format rates
     const availableRates = rates.rates
-      .filter(rate => rate.rate && rate.rate !== '0.00')
+      .filter(rate => rate.amount && rate.amount !== '0.00')
       .map(rate => ({
-        rate: rate.rate,
+        rate: rate.amount,
         servicelevel: {
           name: rate.servicelevel.name,
           token: rate.servicelevel.token

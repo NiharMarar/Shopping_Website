@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       console.log('🔍 API: Checking for existing order with session_id:', session_id);
       const { data: existingOrder, error: checkError } = await supabase
         .from('orders')
-        .select('order_id, order_number, status')
+        .select('order_id, order_number, order_status')
         .eq('stripe_session_id', session_id)
         .single();
 
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
           total_amount: totalAmount,
           shipping_address: shippingAddress,
           billing_address: billingAddress,
-          status: 'pending',
+          order_status: 'pending',
           email: email,
           stripe_session_id: session_id || null
         }

@@ -107,45 +107,63 @@ export default async function handler(req, res) {
     const sessionToken = `token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: lineItems,
-      mode: 'payment',
-      success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${req.headers.origin}/cart`,
-      customer_email: email || undefined, // Set Stripe's receipt email if provided
-      billing_address_collection: 'required', // Require billing address at checkout
-      payment_intent_data: {
-        receipt_email: email || undefined,
-        shipping: {
-          name: shippingAddress?.name,
-          address: {
-            line1: shippingAddress?.line1,
-            line2: shippingAddress?.line2,
-            city: shippingAddress?.city,
-            state: shippingAddress?.state,
-            postal_code: shippingAddress?.postal_code,
-            country: shippingAddress?.country,
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: lineItems,
+        mode: 'payment',
+        success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: cancelUrl || `${req.headers.origin}/cart`,
+        customer_email: email || undefined, // Set Stripe's receipt email if provided
+        billing_address_collection: 'required', // Require billing address at checkout
+        payment_intent_data: {
+          receipt_email: email || undefined,
+          shipping: {
+            name: shippingAddress?.name,
+            address: {
+              line1: shippingAddress?.line1,
+              line2: shippingAddress?.line2,
+              city: shippingAddress?.city,
+              state: shippingAddress?.state,
+              postal_code: shippingAddress?.postal_code,
+              country: shippingAddress?.country,
+            }
           }
+          // Note: Stripe does not allow pre-filling billing address for security reasons
+        },
+        metadata: {
+          cartItemsCount: cartItems.length.toString(),
+          email: email || '',
+          shippingName: shippingAddress?.name || '',
+          shippingCity: shippingAddress?.city || '',
+          sessionToken: sessionToken,
+          // Add billing address to metadata for your own reference (not used by Stripe)
+          billingName: billingAddress?.name || '',
+          billingCity: billingAddress?.city || '',
+          // Add shipping and tax info
+          shippingCost: shippingCost.toString(),
+          taxAmount: taxAmount.toString(),
+          taxRate: (taxRate || 0.08).toString(),
+          selectedShippingRate: selectedShippingRate ? JSON.stringify(selectedShippingRate) : ''
         }
-        // Note: Stripe does not allow pre-filling billing address for security reasons
-      },
-      metadata: {
-        cartItemsCount: cartItems.length.toString(),
-        email: email || '',
-        shippingName: shippingAddress?.name || '',
-        shippingCity: shippingAddress?.city || '',
-        sessionToken: sessionToken,
-        // Add billing address to metadata for your own reference (not used by Stripe)
-        billingName: billingAddress?.name || '',
-        billingCity: billingAddress?.city || '',
-        // Add shipping and tax info
-        shippingCost: shippingCost.toString(),
-        taxAmount: taxAmount.toString(),
-        taxRate: (taxRate || 0.08).toString(),
-        selectedShippingRate: selectedShippingRate ? JSON.stringify(selectedShippingRate) : ''
-      }
-    });
+      });
+    } catch (stripeError) {
+      console.error('❌ Stripe session creation failed:', stripeError);
+      return res.status(500).json({ 
+        error: 'Failed to create Stripe checkout session',
+        details: stripeError.message
+      });
+    }
+
+    if (!session || !session.id) {
+      console.error('❌ No session ID returned from Stripe');
+      return res.status(500).json({ 
+        error: 'No session ID returned from Stripe'
+      });
+    }
+
+    console.log('✅ Stripe session created:', session.id);
 
     // Store cart data in Supabase with session token
     const { error: storageError } = await supabase
@@ -169,10 +187,10 @@ export default async function handler(req, res) {
 
     if (storageError) {
       console.error('❌ Error storing checkout session:', storageError);
-      throw storageError;
+      // Don't fail the entire process if storage fails, but log it
+    } else {
+      console.log('✅ Checkout session stored with token:', sessionToken);
     }
-
-    console.log('✅ Checkout session stored with token:', sessionToken);
 
     // Clean up old sessions (older than 1 hour)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
