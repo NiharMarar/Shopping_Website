@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCartIcon, UserIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { ShoppingCartIcon, UserIcon, MagnifyingGlassIcon, HeartIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import { useCart } from '../lib/CartContext';
 import { useAuth } from '../lib/AuthContext';
+import { useLikes } from '../lib/LikesContext';
 
 export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -14,6 +15,7 @@ export default function Navbar() {
   const router = useRouter();
   const { uniqueCount } = useCart();
   const { user } = useAuth();
+  const { likedProductIds } = useLikes();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -56,6 +58,18 @@ export default function Navbar() {
             >
               <MagnifyingGlassIcon className="h-6 w-6" />
             </button>
+
+            {/* Liked Items */}
+            <div className="relative mx-1">
+              <Link href="/liked-items" className="p-2 text-cyberpunk-neonBlue hover:text-cyberpunk-neonPink transition-colors font-nexus shadow-neon border border-cyberpunk-neonBlue rounded bg-cyberpunk-bg focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonPink flex items-center">
+                <HeartIcon className="h-6 w-6" />
+                {likedProductIds.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-cyberpunk-neonPink text-cyberpunk-neonBlue text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center font-nexus font-bold shadow-neon border border-cyberpunk-neonBlue" style={{letterSpacing: '0.05em', textShadow: '0 0 4px #00ffe7'}}>
+                    {likedProductIds.length}
+                  </span>
+                )}
+              </Link>
+            </div>
 
             {/* Cart */}
             <div className="relative mx-1">
