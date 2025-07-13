@@ -105,7 +105,3 @@ Tracking Number: 9205590347375207763875
 
 
 Branches fully merged
-
-To Do:
-ok so there a few things that we do need to fix that arent ui ex related. like for example success page needs to be secured, i tried adding /success after the local host and it allowed the user to go to that page, although nothing happened, it just says processing your order with a really cool loading circle, love that addition, bt yea, we need to make sure that that page is secured and cannot be accessed, only until the order actually gets processed and all, so how do we do that?
-

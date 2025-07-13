@@ -34,14 +34,14 @@ export default function Navbar() {
                 NEXUS
               </span>
             </Link>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link href="/products" className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-indigo-500">
+            <div className="hidden sm:ml-6 sm:flex sm:space-x-4 items-center">
+              <Link href="/products" className="px-3 py-1 text-cyberpunk-neonBlue hover:text-cyberpunk-neonPink font-nexus font-bold border border-cyberpunk-neonBlue rounded bg-cyberpunk-bg shadow-neon transition-colors focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonPink mx-1">
                 Products
               </Link>
-              <Link href="/orders" className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-indigo-500">
+              <Link href="/orders" className="px-3 py-1 text-cyberpunk-neonBlue hover:text-cyberpunk-neonPink font-nexus font-bold border border-cyberpunk-neonBlue rounded bg-cyberpunk-bg shadow-neon transition-colors focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonPink mx-1">
                 Orders
               </Link>
-              <Link href="/categories" className="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-indigo-500">
+              <Link href="/categories" className="px-3 py-1 text-cyberpunk-neonBlue hover:text-cyberpunk-neonPink font-nexus font-bold border border-cyberpunk-neonBlue rounded bg-cyberpunk-bg shadow-neon transition-colors focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonPink mx-1">
                 Categories
               </Link>
             </div>
