@@ -12,7 +12,7 @@ export default function Toast({ message, visible, onClose }) {
 
   return (
     <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-      <div className="bg-gray-900 text-white px-4 py-2 rounded shadow-lg animate-fade-in">
+      <div className="bg-cyberpunk-surface text-cyberpunk-neonBlue px-4 py-2 rounded shadow-neon font-nexus border border-cyberpunk-neonPink animate-fade-in">
         {message}
       </div>
       <style jsx>{`

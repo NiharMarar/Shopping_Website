@@ -345,7 +345,7 @@ export default function Checkout() {
   if (loading) {
     console.log('Checkout: loading...');
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-cyberpunk-bg py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center">Loading...</div>
         </div>
@@ -361,50 +361,44 @@ export default function Checkout() {
         <title>Checkout - YourShop</title>
       </Head>
 
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-cyberpunk-bg py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Shipping Information */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-2xl font-bold mb-6">Shipping Information</h2>
+            <div className="bg-cyberpunk-surface p-6 rounded-lg shadow-neon border border-cyberpunk-neonBlue">
+              <h2 className="text-2xl font-nexus font-bold mb-6 text-cyberpunk-neonBlue drop-shadow-[0_0_8px_#00ffe7]">Shipping Information</h2>
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
+                    <label htmlFor="name" className="block text-sm font-nexus text-cyberpunk-neonPink">Full Name</label>
                     <input
                       type="text"
                       id="name"
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                       value={shippingAddress.name}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, name: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="line1" className="block text-sm font-medium text-gray-700">
-                      Address Line 1
-                    </label>
+                    <label htmlFor="line1" className="block text-sm font-nexus text-cyberpunk-neonPink">Address Line 1</label>
                     <input
                       type="text"
                       id="line1"
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                       value={shippingAddress.line1}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, line1: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="line2" className="block text-sm font-medium text-gray-700">
-                      Address Line 2
-                    </label>
+                    <label htmlFor="line2" className="block text-sm font-nexus text-cyberpunk-neonPink">Address Line 2</label>
                     <input
                       type="text"
                       id="line2"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                       value={shippingAddress.line2}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, line2: e.target.value })}
                     />
@@ -412,28 +406,24 @@ export default function Checkout() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                        City
-                      </label>
+                      <label htmlFor="city" className="block text-sm font-nexus text-cyberpunk-neonPink">City</label>
                       <input
                         type="text"
                         id="city"
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                         value={shippingAddress.city}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="state" className="block text-sm font-medium text-gray-700">
-                        State
-                      </label>
+                      <label htmlFor="state" className="block text-sm font-nexus text-cyberpunk-neonPink">State</label>
                       <input
                         type="text"
                         id="state"
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                         value={shippingAddress.state}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
                       />
@@ -442,27 +432,23 @@ export default function Checkout() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="postal_code" className="block text-sm font-medium text-gray-700">
-                        Postal Code
-                      </label>
+                      <label htmlFor="postal_code" className="block text-sm font-nexus text-cyberpunk-neonPink">Postal Code</label>
                       <input
                         type="text"
                         id="postal_code"
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                         value={shippingAddress.postal_code}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, postal_code: e.target.value })}
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-                        Country
-                      </label>
+                      <label htmlFor="country" className="block text-sm font-nexus text-cyberpunk-neonPink">Country</label>
                       <select
                         id="country"
                         required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                         value={shippingAddress.country}
                         onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
                       >
@@ -474,14 +460,12 @@ export default function Checkout() {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email Address
-                    </label>
+                    <label htmlFor="email" className="block text-sm font-nexus text-cyberpunk-neonPink">Email Address</label>
                     <input
                       type="email"
                       id="email"
                       required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
@@ -540,41 +524,35 @@ export default function Checkout() {
                       <h3 className="text-lg font-medium text-gray-900">Billing Address</h3>
                       {/* Billing address fields - same structure as shipping */}
                       <div>
-                        <label htmlFor="billing_name" className="block text-sm font-medium text-gray-700">
-                          Full Name
-                        </label>
+                        <label htmlFor="billing_name" className="block text-sm font-nexus text-cyberpunk-neonPink">Full Name</label>
                         <input
                           type="text"
                           id="billing_name"
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                           value={billingAddress.name}
                           onChange={(e) => setBillingAddress({ ...billingAddress, name: e.target.value })}
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="billing_line1" className="block text-sm font-medium text-gray-700">
-                          Address Line 1
-                        </label>
+                        <label htmlFor="billing_line1" className="block text-sm font-nexus text-cyberpunk-neonPink">Address Line 1</label>
                         <input
                           type="text"
                           id="billing_line1"
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                           value={billingAddress.line1}
                           onChange={(e) => setBillingAddress({ ...billingAddress, line1: e.target.value })}
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="billing_line2" className="block text-sm font-medium text-gray-700">
-                          Address Line 2
-                        </label>
+                        <label htmlFor="billing_line2" className="block text-sm font-nexus text-cyberpunk-neonPink">Address Line 2</label>
                         <input
                           type="text"
                           id="billing_line2"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                           value={billingAddress.line2}
                           onChange={(e) => setBillingAddress({ ...billingAddress, line2: e.target.value })}
                         />
@@ -582,28 +560,24 @@ export default function Checkout() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label htmlFor="billing_city" className="block text-sm font-medium text-gray-700">
-                            City
-                          </label>
+                          <label htmlFor="billing_city" className="block text-sm font-nexus text-cyberpunk-neonPink">City</label>
                           <input
                             type="text"
                             id="billing_city"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                             value={billingAddress.city}
                             onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
                           />
                         </div>
 
                         <div>
-                          <label htmlFor="billing_state" className="block text-sm font-medium text-gray-700">
-                            State
-                          </label>
+                          <label htmlFor="billing_state" className="block text-sm font-nexus text-cyberpunk-neonPink">State</label>
                           <input
                             type="text"
                             id="billing_state"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                             value={billingAddress.state}
                             onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
                           />
@@ -612,27 +586,23 @@ export default function Checkout() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label htmlFor="billing_postal_code" className="block text-sm font-medium text-gray-700">
-                            Postal Code
-                          </label>
+                          <label htmlFor="billing_postal_code" className="block text-sm font-nexus text-cyberpunk-neonPink">Postal Code</label>
                           <input
                             type="text"
                             id="billing_postal_code"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                             value={billingAddress.postal_code}
                             onChange={(e) => setBillingAddress({ ...billingAddress, postal_code: e.target.value })}
                           />
                         </div>
 
                         <div>
-                          <label htmlFor="billing_country" className="block text-sm font-medium text-gray-700">
-                            Country
-                          </label>
+                          <label htmlFor="billing_country" className="block text-sm font-nexus text-cyberpunk-neonPink">Country</label>
                           <select
                             id="billing_country"
                             required
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            className="mt-1 block w-full rounded-md border-cyberpunk-neonBlue bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus shadow-neon focus:border-cyberpunk-neonPink focus:ring-cyberpunk-neonPink"
                             value={billingAddress.country}
                             onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
                           >
@@ -648,7 +618,7 @@ export default function Checkout() {
                   <button
                     type="submit"
                     disabled={loading || !selectedShippingRate}
-                    className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-6 w-full bg-cyberpunk-neonBlue text-white py-2 px-4 rounded-md hover:bg-cyberpunk-neonPink font-nexus shadow-neon focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonPink focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Processing...' : 'Proceed to Payment'}
                   </button>
@@ -657,8 +627,8 @@ export default function Checkout() {
             </div>
 
             {/* Order Summary */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
+            <div className="bg-cyberpunk-surface p-6 rounded-lg shadow-neon border border-cyberpunk-neonBlue">
+              <h2 className="text-2xl font-nexus font-bold mb-6 text-cyberpunk-neonBlue drop-shadow-[0_0_8px_#00ffe7]">Order Summary</h2>
               
               {/* Cart Items */}
               <div className="space-y-4 mb-6">

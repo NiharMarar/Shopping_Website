@@ -225,33 +225,31 @@ export default function Orders() {
         <meta name="description" content="Search and view your orders" />
       </Head>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Orders</h1>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-cyberpunk-bg min-h-screen">
+        <h1 className="text-3xl font-nexus font-bold text-cyberpunk-neonBlue mb-8 drop-shadow-[0_0_8px_#00ffe7]">Orders</h1>
 
         {/* Search Section */}
-        <div className="bg-white shadow rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Search Order</h2>
-          <p className="text-sm text-gray-600 mb-4">
+        <div className="bg-cyberpunk-surface shadow-neon rounded-lg p-6 mb-8 border border-cyberpunk-neonBlue">
+          <h2 className="text-lg font-nexus font-medium text-cyberpunk-neonBlue mb-4">Search Order</h2>
+          <p className="text-sm text-cyberpunk-neonPurple mb-4">
             Enter your order number to find your order details
           </p>
-          
           <div className="flex space-x-4">
             <input
               type="text"
               placeholder="Enter order number (e.g., ORD-1234567890-123)"
               value={searchOrderNumber}
               onChange={(e) => setSearchOrderNumber(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 border border-cyberpunk-neonBlue rounded-md px-3 py-2 bg-cyberpunk-bg text-cyberpunk-neonBlue font-nexus focus:outline-none focus:ring-2 focus:ring-cyberpunk-neonPink"
             />
             <button
               onClick={searchOrder}
               disabled={searchLoading || !searchOrderNumber.trim()}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+              className="bg-cyberpunk-neonBlue text-cyberpunk-bg px-6 py-2 rounded-md hover:bg-cyberpunk-neonPink font-nexus shadow-neon border border-cyberpunk-neonPink disabled:bg-cyberpunk-surface disabled:text-cyberpunk-neonPurple"
             >
               {searchLoading ? 'Searching...' : 'Search'}
             </button>
           </div>
-
           {/* Search Results */}
           {searchResult && (
             <div className="mt-6">
@@ -273,13 +271,13 @@ export default function Orders() {
             
             {loading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading your orders...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyberpunk-neonBlue mx-auto shadow-neon"></div>
+                <p className="mt-4 text-cyberpunk-neonPurple font-nexus">Loading your orders...</p>
               </div>
             ) : orders.length === 0 ? (
               <div className="text-center py-12">
-                <h3 className="text-xl font-medium text-gray-900">No orders yet</h3>
-                <p className="mt-2 text-gray-500">Start shopping to see your orders here.</p>
+                <h3 className="text-xl font-nexus font-medium text-cyberpunk-neonPink">No orders yet</h3>
+                <p className="mt-2 text-cyberpunk-neonPurple">Start shopping to see your orders here.</p>
               </div>
             ) : (
               <div className="space-y-6">
@@ -293,9 +291,9 @@ export default function Orders() {
 
         {/* Guest message */}
         {!user && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-6">
-            <h3 className="text-lg font-medium text-blue-900 mb-2">Not logged in?</h3>
-            <p className="text-blue-700">
+          <div className="bg-cyberpunk-surface border border-cyberpunk-neonBlue rounded-md p-6">
+            <h3 className="text-lg font-nexus font-medium text-cyberpunk-neonPink mb-2">Not logged in?</h3>
+            <p className="text-cyberpunk-neonBlue">
               You can still search for your orders using your order number above. 
               If you create an account, you'll be able to see all your orders in one place.
             </p>

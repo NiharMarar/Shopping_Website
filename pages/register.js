@@ -37,17 +37,15 @@ export default function Register() {
         <meta name="description" content="Create a new account" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-cyberpunk-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
+          <h2 className="mt-6 text-center text-3xl font-nexus font-extrabold text-cyberpunk-neonBlue drop-shadow-[0_0_8px_#00ffe7]">Create your account</h2>
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <div className="bg-cyberpunk-surface py-8 px-4 shadow-neon sm:rounded-lg sm:px-10 border border-cyberpunk-neonBlue">
             {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+              <div className="mb-4 bg-cyberpunk-bg border border-cyberpunk-neonPink text-cyberpunk-neonPink px-4 py-3 rounded font-nexus">
                 {error}
               </div>
             )}
