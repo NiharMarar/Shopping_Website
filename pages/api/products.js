@@ -11,10 +11,22 @@ export default async function handler(req, res) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    const { data, error } = await supabase
+    let query = supabase
       .from('products')
-      .select('product_id, image_url, created_at, product_name, product_description, product_price, length, width, height, weight')
+      .select('product_id, image_url, created_at, product_name, product_description, product_price, length, width, height, weight, category_id');
+
+    // Category filter
+    if (req.query.category) {
+      query = query.eq('category_id', req.query.category);
+    }
+
+    // Search filter
+    if (req.query.search) {
+      const search = req.query.search;
+      query = query.or(`product_name.ilike.%${search}%,product_description.ilike.%${search}%`);
+    }
+
+    const { data, error } = await query;
     if (error) {
       return res.status(500).json({ error: error.message });
     }
